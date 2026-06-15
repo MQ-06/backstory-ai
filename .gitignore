@@ -1,0 +1,89 @@
+# ─── Dependencies ───
+node_modules/
+.pnpm-store/
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+.Python
+apps/api/.venv/
+
+# ─── Build & cache ───
+.next/
+out/
+dist/
+build/
+*.egg-info/
+.turbo/
+*.tsbuildinfo
+apps/web/tsconfig.tsbuildinfo
+
+# Python packaging
+*.egg
+.eggs/
+pip-wheel-metadata/
+
+# ─── Environment & secrets (NEVER commit) ───
+.env
+.env.*
+!.env.example
+apps/web/.env
+apps/web/.env.local
+apps/web/.env.*.local
+apps/api/.env
+apps/api/.env.*
+*.pem
+credentials.json
+secrets.json
+
+# ─── IDE & editor ───
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ─── OS ───
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ─── Test & coverage ───
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+coverage/
+playwright-report/
+test-results/
+.nyc_output/
+
+# ─── Logs ───
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ─── Docker local data ───
+docker-data/
+
+# ─── Cursor IDE (local AI config — never commit) ───
+.cursor/
+
+# ─── Misc ───
+.vercel
+*.local.md
+*.lova
+
+# Large duplicate of PRD.md
+Backstory_PRD.pdf
+
+# Personal session handoffs (keep folder README)
+examples/sessions/*.md
+!examples/sessions/README.md
+
+# uv cache
+.uv/
