@@ -87,3 +87,23 @@ examples/sessions/*.md
 
 # uv cache
 .uv/
+
+skills/
+scripts/
+prompts/
+examples/
+knowledge/
+docs/
+agents/
+AGENTS.md
+FEATURES.md
+PRD.md
+AI_WORKFLOW.md
+docs/
+docs/ai-development.md
+docs/SPRINT0.md
+docs/workflows/
+docs/workflows/end-session-handoff.md
+docs/workflows/start-session.md
+docs/workflows/start-session-cold-start.md
+docs/workflows/start-session-handoff.md

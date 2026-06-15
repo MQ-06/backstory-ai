@@ -37,7 +37,7 @@ export function AppShell({
       <aside className="flex w-60 shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
         <div className="border-b border-sidebar-border px-5 py-5">
           <Link href="/ask" className="group block">
-            <p className="text-lg font-semibold tracking-tight text-sidebar-foreground">
+            <p className="font-display text-lg font-semibold tracking-tight text-sidebar-foreground">
               Backstory
             </p>
             <p className="mt-0.5 text-xs text-muted-foreground transition-colors group-hover:text-sidebar-foreground/80">

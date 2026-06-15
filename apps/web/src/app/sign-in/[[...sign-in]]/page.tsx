@@ -5,7 +5,7 @@ import { AuthPanel } from "@/components/auth-panel";
 export default function SignInPage() {
   return (
     <AuthPanel>
-      <SignIn />
+      <SignIn routing="path" path="/sign-in" signUpUrl="/sign-up" />
     </AuthPanel>
   );
 }
