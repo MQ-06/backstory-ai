@@ -106,7 +106,7 @@ def link_artifact_chunk(
     chunk: Chunk,
 ) -> int:
     """Scan one artifact chunk for deterministic references; return links created."""
-    if artifact.artifact_type not in ("ticket", "doc", "commit"):
+    if artifact.artifact_type not in ("ticket", "doc", "commit", "interview"):
         return 0
 
     text = chunk.content or ""

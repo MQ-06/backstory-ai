@@ -84,6 +84,22 @@ def _chunk_label(chunk: Chunk) -> tuple[str, str, dict | None]:
             locator = {"artifact_id": str(art.id), "sha": meta.get("sha")}
             return label, "commit", locator
 
+        if art.artifact_type == "interview":
+            meta = art.metadata_ or {}
+            start = float(meta.get("start_seconds") or 0)
+            mins = int(start // 60)
+            secs = int(start % 60)
+            expert = meta.get("expert_name") or "Expert"
+            label = f"▶ {expert} interview {mins}:{secs:02d}"
+            locator = {
+                "artifact_id": str(art.id),
+                "interview_id": meta.get("interview_id"),
+                "start_seconds": start,
+                "end_seconds": meta.get("end_seconds"),
+                "segment_index": meta.get("segment_index"),
+            }
+            return label, "interview", locator
+
     source_name = chunk.source.name if chunk.source else "source"
     return source_name, "text", {"chunk_id": str(chunk.id)}
 
