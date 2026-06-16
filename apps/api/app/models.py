@@ -214,6 +214,98 @@ class Citation(Base):
     answer: Mapped["Answer"] = relationship(back_populates="citations")
 
 
+class ArchaeologyBrief(Base):
+    """Feature 10 — ranked questions with motivating evidence."""
+
+    __tablename__ = "archaeology_brief"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    engagement_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("engagement.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    clerk_user_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    expert_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    module_path: Mapped[str | None] = mapped_column(String(1024), nullable=True)
+    status: Mapped[str] = mapped_column(String(50), nullable=False, default="ready")
+    signals: Mapped[list | None] = mapped_column(JSONB, nullable=True)
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    questions: Mapped[list["BriefQuestion"]] = relationship(back_populates="brief")
+    interviews: Mapped[list["Interview"]] = relationship(back_populates="brief")
+
+
+class BriefQuestion(Base):
+    __tablename__ = "brief_question"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    brief_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("archaeology_brief.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    rank: Mapped[int] = mapped_column(Integer, nullable=False)
+    question_text: Mapped[str] = mapped_column(Text, nullable=False)
+    evidence: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    code_entity_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("code_entity.id", ondelete="SET NULL"), nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    brief: Mapped["ArchaeologyBrief"] = relationship(back_populates="questions")
+
+
+class Interview(Base):
+    """Feature 5 — recorded expert session."""
+
+    __tablename__ = "interview"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    engagement_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("engagement.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    brief_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("archaeology_brief.id", ondelete="SET NULL"), nullable=True
+    )
+    source_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("source.id", ondelete="SET NULL"), nullable=True
+    )
+    clerk_user_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    expert_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    status: Mapped[str] = mapped_column(String(50), nullable=False, default="draft")
+    media_path: Mapped[str | None] = mapped_column(Text, nullable=True)
+    media_mime: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    duration_seconds: Mapped[float | None] = mapped_column(Float, nullable=True)
+    consent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    status_detail: Mapped[str | None] = mapped_column(Text, nullable=True)
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    brief: Mapped["ArchaeologyBrief | None"] = relationship(back_populates="interviews")
+    segments: Mapped[list["TranscriptSegment"]] = relationship(back_populates="interview")
+
+
+class TranscriptSegment(Base):
+    __tablename__ = "transcript_segment"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    interview_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("interview.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    segment_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    start_seconds: Mapped[float] = mapped_column(Float, nullable=False)
+    end_seconds: Mapped[float] = mapped_column(Float, nullable=False)
+    text: Mapped[str] = mapped_column(Text, nullable=False)
+    artifact_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("artifact.id", ondelete="SET NULL"), nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    interview: Mapped["Interview"] = relationship(back_populates="segments")
+
+
 class AuditEvent(Base):
     """Who did what — ingest, query, export."""
 
