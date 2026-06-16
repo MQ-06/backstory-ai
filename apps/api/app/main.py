@@ -1,10 +1,12 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.config import get_settings
 from app.routers.engagements import router as engagements_router
+from app.routers.sources import router as sources_router
 from app.routers.sse import router as sse_router
 
 
@@ -29,11 +31,16 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
+    @app.exception_handler(Exception)
+    async def unhandled_exception_handler(_request: Request, exc: Exception) -> JSONResponse:
+        return JSONResponse(status_code=500, content={"detail": str(exc)})
+
     @app.get("/health")
     async def health() -> dict[str, str]:
         return {"status": "ok"}
 
     app.include_router(engagements_router, prefix="/api/v1")
+    app.include_router(sources_router, prefix="/api/v1")
     app.include_router(sse_router, prefix="/api/v1")
     return app
 

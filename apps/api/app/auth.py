@@ -43,7 +43,6 @@ async def _fetch_clerk_jwks() -> dict:
 
 async def verify_clerk_token(token: str) -> dict:
     """Verify Clerk session JWT and return claims."""
-    settings = get_settings()
     jwks = await _fetch_clerk_jwks()
     try:
         unverified = jwt.get_unverified_header(token)
