@@ -39,7 +39,7 @@ dev-api:
 	pnpm dev:api
 
 dev-worker:
-	cd apps/api && uv run celery -A app.worker worker -Q ingest -l info
+	cd apps/api && uv run celery -A app.worker worker -Q ingest,transcribe -l info
 
 test:
 	cd apps/api && uv run pytest -q

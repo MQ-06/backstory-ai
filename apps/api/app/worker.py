@@ -8,7 +8,7 @@ celery_app = Celery(
     "backstory",
     broker=settings.redis_url,
     backend=settings.redis_url,
-    include=["app.tasks.ingest"],
+    include=["app.tasks.ingest", "app.tasks.transcribe"],
 )
 
 celery_app.conf.update(
@@ -19,9 +19,11 @@ celery_app.conf.update(
     enable_utc=True,
     task_routes={
         "app.tasks.ingest.run_source_ingest": {"queue": "ingest"},
+        "app.tasks.transcribe.run_interview_transcribe": {"queue": "transcribe"},
     },
     task_default_queue="ingest",
 )
 
 # Import task modules so @celery_app.task decorators register.
 import app.tasks.ingest  # noqa: E402, F401
+import app.tasks.transcribe  # noqa: E402, F401

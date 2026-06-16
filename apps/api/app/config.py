@@ -34,6 +34,10 @@ class Settings(BaseSettings):
     retrieval_top_k: int = 12
     retrieval_neighbor_limit: int = 4
     retrieval_min_rrf_score: float = 0.008
+    media_dir: str = "data/interviews"
+    interview_max_upload_bytes: int = 104_857_600  # 100 MB
+    transcribe_provider: str = "groq"
+    transcribe_model: str = "whisper-large-v3"
 
     @property
     def database_url_sync(self) -> str:
