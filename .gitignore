@@ -70,6 +70,10 @@ yarn-error.log*
 # ─── Docker local data ───
 docker-data/
 
+# ─── Local uploads (Sprint 1 dev; R2 in production) ───
+data/uploads/
+apps/api/data/
+
 # ─── Cursor IDE (local AI config — never commit) ───
 .cursor/
 

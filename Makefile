@@ -1,12 +1,13 @@
-.PHONY: help up down db-migrate db-revision dev dev-web dev-api test lint install
+.PHONY: help up down db-migrate db-revision dev dev-web dev-api dev-worker test lint install
 
 help:
-	@echo "Backstory-AI — Sprint 0 commands"
+	@echo "Backstory-AI — dev commands"
 	@echo "  make install     Install JS + Python dependencies"
 	@echo "  make up          Start Postgres + Redis (docker)"
 	@echo "  make down        Stop docker services"
 	@echo "  make db-migrate  Run Alembic migrations"
 	@echo "  make dev         Start web + API (parallel)"
+	@echo "  make dev-worker  Start Celery ingest worker (separate terminal)"
 	@echo "  make test        Run all tests"
 
 install:
@@ -36,6 +37,9 @@ dev-web:
 
 dev-api:
 	pnpm dev:api
+
+dev-worker:
+	cd apps/api && uv run celery -A app.worker worker -Q ingest -l info
 
 test:
 	cd apps/api && uv run pytest -q
