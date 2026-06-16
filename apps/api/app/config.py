@@ -22,6 +22,18 @@ class Settings(BaseSettings):
     embedding_model: str = "text-embedding-3-small"
     embedding_dimensions: int = 384
     embedding_batch_size: int = 64
+    google_api_key: str = ""
+    groq_api_key: str = ""
+    llm_provider: str = "groq"  # groq (free cloud) | ollama (free local) | gemini
+    llm_model: str = "llama-3.1-8b-instant"  # provider-specific; see .env.example
+    ollama_base_url: str = "http://localhost:11434"
+    llm_temperature: float = 0.2
+    llm_max_output_tokens: int = 2048
+    llm_context_passages: int = 5  # passages sent to LLM (keep low for Groq free tier)
+    llm_context_max_chars: int = 600  # chars per passage in LLM prompt
+    retrieval_top_k: int = 12
+    retrieval_neighbor_limit: int = 4
+    retrieval_min_rrf_score: float = 0.008
 
     @property
     def database_url_sync(self) -> str:
