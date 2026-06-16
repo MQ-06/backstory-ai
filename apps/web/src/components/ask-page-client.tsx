@@ -5,6 +5,7 @@ import {
   Code2,
   FileText,
   Loader2,
+  Mic,
   Send,
   Sparkles,
   Ticket,
@@ -14,6 +15,7 @@ import { useCallback, useRef, useState } from "react";
 
 import { PageHeader } from "@/components/page-header";
 import { useEngagement } from "@/components/providers";
+import { VideoClipPlayer } from "@/components/video-clip-player";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,13 +34,21 @@ const CITATION_ICON = {
   ticket: Ticket,
   doc: FileText,
   commit: Code2,
+  interview: Mic,
   text: FileText,
 } as const;
 
-function CitationChip({ citation }: { citation: AskCitation }) {
+function CitationChip({
+  citation,
+  onInterviewClick,
+}: {
+  citation: AskCitation;
+  onInterviewClick?: (citation: AskCitation) => void;
+}) {
   const Icon = CITATION_ICON[citation.citation_type as keyof typeof CITATION_ICON] ?? FileText;
-  return (
-    <div className="flex items-start gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm">
+  const isInterview = citation.citation_type === "interview";
+  const content = (
+    <>
       <Icon className="mt-0.5 size-4 shrink-0 text-primary" />
       <div className="min-w-0">
         <p className="font-medium leading-snug">{citation.label}</p>
@@ -46,6 +56,22 @@ function CitationChip({ citation }: { citation: AskCitation }) {
           <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{citation.snippet}</p>
         ) : null}
       </div>
+    </>
+  );
+  if (isInterview && onInterviewClick) {
+    return (
+      <button
+        type="button"
+        onClick={() => onInterviewClick(citation)}
+        className="flex w-full items-start gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2 text-left text-sm transition-colors hover:border-primary/40 hover:bg-accent"
+      >
+        {content}
+      </button>
+    );
+  }
+  return (
+    <div className="flex items-start gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm">
+      {content}
     </div>
   );
 }
@@ -82,6 +108,7 @@ export function AskPageClient() {
   const [refusalReason, setRefusalReason] = useState<string | null>(null);
   const [isAsking, setIsAsking] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [clipCitation, setClipCitation] = useState<AskCitation | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   const engagementId = activeEngagement?.id;
@@ -269,10 +296,34 @@ export function AskPageClient() {
               </p>
               <div className="grid gap-2 sm:grid-cols-2">
                 {citations.map((c, i) => (
-                  <CitationChip key={c.id ?? `${c.label}-${i}`} citation={c} />
+                  <CitationChip
+                    key={c.id ?? `${c.label}-${i}`}
+                    citation={c}
+                    onInterviewClick={(cit) => setClipCitation(cit)}
+                  />
                 ))}
               </div>
             </div>
+          ) : null}
+
+          {clipCitation && activeEngagement && clipCitation.locator?.interview_id ? (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-base">Interview clip</CardTitle>
+                <Button variant="ghost" size="sm" onClick={() => setClipCitation(null)}>
+                  Close
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <VideoClipPlayer
+                  engagementId={activeEngagement.id}
+                  interviewId={String(clipCitation.locator.interview_id)}
+                  startSeconds={Number(clipCitation.locator.start_seconds ?? 0)}
+                  snippet={clipCitation.snippet}
+                  label={clipCitation.label}
+                />
+              </CardContent>
+            </Card>
           ) : null}
         </div>
       ) : null}

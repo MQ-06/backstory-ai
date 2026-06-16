@@ -304,3 +304,134 @@ export async function streamAsk(handlers: StreamAskHandlers): Promise<void> {
   }
 }
 
+export type BriefQuestion = {
+  id: string;
+  rank: number;
+  question_text: string;
+  evidence: Record<string, unknown> | null;
+};
+
+export type ArchaeologyBrief = {
+  id: string;
+  engagement_id: string;
+  expert_name: string | null;
+  module_path: string | null;
+  status: string;
+  signals: Record<string, unknown>[] | null;
+  error_message: string | null;
+  created_at: string;
+  questions: BriefQuestion[];
+};
+
+export type TranscriptSegment = {
+  id: string;
+  segment_index: number;
+  start_seconds: number;
+  end_seconds: number;
+  text: string;
+};
+
+export type Interview = {
+  id: string;
+  engagement_id: string;
+  brief_id: string | null;
+  title: string;
+  expert_name: string | null;
+  status: string;
+  status_detail: string | null;
+  error_message: string | null;
+  media_mime: string | null;
+  duration_seconds: number | null;
+  consent_at: string | null;
+  created_at: string;
+  segments: TranscriptSegment[];
+};
+
+export async function fetchBriefs(token: string, engagementId: string): Promise<ArchaeologyBrief[]> {
+  return apiFetch<ArchaeologyBrief[]>(`/api/v1/engagements/${engagementId}/briefs`, token);
+}
+
+export async function generateBrief(
+  token: string,
+  engagementId: string,
+  payload: { expert_name?: string; module_path?: string },
+): Promise<ArchaeologyBrief> {
+  return apiFetch<ArchaeologyBrief>(`/api/v1/engagements/${engagementId}/briefs`, token, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function fetchInterviews(token: string, engagementId: string): Promise<Interview[]> {
+  return apiFetch<Interview[]>(`/api/v1/engagements/${engagementId}/interviews`, token);
+}
+
+export async function createInterview(
+  token: string,
+  engagementId: string,
+  payload: { title: string; expert_name?: string; brief_id?: string },
+): Promise<Interview> {
+  return apiFetch<Interview>(`/api/v1/engagements/${engagementId}/interviews`, token, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function recordInterviewConsent(
+  token: string,
+  engagementId: string,
+  interviewId: string,
+): Promise<Interview> {
+  return apiFetch<Interview>(
+    `/api/v1/engagements/${engagementId}/interviews/${interviewId}/consent`,
+    token,
+    { method: "POST" },
+  );
+}
+
+export async function uploadInterviewMedia(
+  token: string,
+  engagementId: string,
+  interviewId: string,
+  file: File,
+): Promise<Interview> {
+  if (!token) throw new Error("Not signed in");
+  const form = new FormData();
+  form.append("file", file);
+  const response = await fetch(
+    `${API_URL}/api/v1/engagements/${engagementId}/interviews/${interviewId}/upload`,
+    { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: form },
+  );
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(body || `Upload failed ${response.status}`);
+  }
+  return response.json() as Promise<Interview>;
+}
+
+export async function transcribeInterview(
+  token: string,
+  engagementId: string,
+  interviewId: string,
+): Promise<Interview> {
+  return apiFetch<Interview>(
+    `/api/v1/engagements/${engagementId}/interviews/${interviewId}/transcribe`,
+    token,
+    { method: "POST" },
+  );
+}
+
+export async function getInterviewMediaBlobUrl(
+  token: string,
+  engagementId: string,
+  interviewId: string,
+): Promise<string> {
+  const response = await fetch(
+    `${API_URL}/api/v1/engagements/${engagementId}/interviews/${interviewId}/media`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+  if (!response.ok) throw new Error("Could not load interview media");
+  const blob = await response.blob();
+  return URL.createObjectURL(blob);
+}
+

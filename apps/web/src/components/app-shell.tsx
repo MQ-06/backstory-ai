@@ -66,7 +66,7 @@ export function AppShell({
           })}
         </nav>
         <div className="border-t border-sidebar-border p-4">
-          <p className="text-xs text-muted-foreground">Sprint 0 · Foundation</p>
+          <p className="text-xs text-muted-foreground">MVP · Features 1–10</p>
         </div>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
