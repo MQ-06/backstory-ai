@@ -156,3 +156,151 @@ export async function checkApiHealth(): Promise<boolean> {
     return false;
   }
 }
+
+export type AskCitation = {
+  id?: string;
+  passage_id?: number;
+  chunk_id?: string;
+  citation_type: string;
+  label: string;
+  snippet?: string;
+  locator?: Record<string, unknown> | null;
+  final?: boolean;
+};
+
+export type AskDoneEvent = {
+  answer_id: string;
+  refused: boolean;
+  answer_text?: string;
+  citations?: AskCitation[];
+};
+
+type StreamAskHandlers = {
+  token: string;
+  engagementId: string;
+  question: string;
+  signal?: AbortSignal;
+  onStatus?: (status: string) => void;
+  onToken?: (token: string) => void;
+  onCitation?: (citation: AskCitation) => void;
+  onRefusal?: (reason: string) => void;
+  onError?: (message: string) => void;
+  onDone?: (event: AskDoneEvent) => void;
+};
+
+function parseSseBlock(block: string): { event: string; data: string } | null {
+  let event = "message";
+  let data = "";
+  for (const rawLine of block.split("\n")) {
+    const line = rawLine.replace(/\r$/, "");
+    if (line.startsWith("event:")) event = line.slice(6).trim();
+    if (line.startsWith("data:")) data += line.slice(5).trim();
+  }
+  if (!data && event === "message") return null;
+  return { event, data };
+}
+
+export async function streamAsk(handlers: StreamAskHandlers): Promise<void> {
+  const { token, engagementId, question, signal } = handlers;
+
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}/api/v1/engagements/${engagementId}/ask`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        Accept: "text/event-stream",
+      },
+      body: JSON.stringify({ question }),
+      signal,
+    });
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
+    throw new Error(
+      `Cannot reach API at ${API_URL}. Start it with: make dev-api (${detail})`,
+    );
+  }
+
+  if (!response.ok) {
+    const body = await response.text();
+    let message = body || `API error ${response.status}`;
+    try {
+      const parsed = JSON.parse(body) as { detail?: string };
+      if (parsed.detail) message = parsed.detail;
+    } catch {
+      // keep raw body
+    }
+    throw new Error(message);
+  }
+
+  const reader = response.body?.getReader();
+  if (!reader) throw new Error("Streaming not supported in this browser");
+
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let sawTerminal = false;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const parts = buffer.split(/\r?\n\r?\n/);
+    buffer = parts.pop() ?? "";
+
+    for (const part of parts) {
+      const parsed = parseSseBlock(part.trim());
+      if (!parsed) continue;
+
+      const { event, data } = parsed;
+      if (event === "status") {
+        handlers.onStatus?.(data);
+        continue;
+      }
+      if (event === "token") {
+        sawTerminal = true;
+        handlers.onToken?.(data);
+        continue;
+      }
+      if (event === "error") {
+        sawTerminal = true;
+        handlers.onError?.(data);
+        continue;
+      }
+      if (event === "refusal") {
+        sawTerminal = true;
+        try {
+          const payload = JSON.parse(data) as { reason?: string };
+          handlers.onRefusal?.(payload.reason ?? data);
+        } catch {
+          handlers.onRefusal?.(data);
+        }
+        continue;
+      }
+      if (event === "citation") {
+        try {
+          handlers.onCitation?.(JSON.parse(data) as AskCitation);
+        } catch {
+          // ignore malformed citation events
+        }
+        continue;
+      }
+      if (event === "done") {
+        sawTerminal = true;
+        try {
+          const payload = JSON.parse(data) as AskDoneEvent & { error?: string };
+          if (payload.error) handlers.onError?.(payload.error);
+          handlers.onDone?.(payload);
+        } catch {
+          handlers.onDone?.({ answer_id: "", refused: false });
+        }
+      }
+    }
+  }
+
+  if (!sawTerminal) {
+    handlers.onError?.("Ask stream ended without a response — check API logs and Gemini quota.");
+  }
+}
+
