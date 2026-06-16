@@ -4,24 +4,63 @@ export type Engagement = {
   created_at: string;
 };
 
+export type SourceStatus = "queued" | "processing" | "indexed" | "error";
+
+export type Source = {
+  id: string;
+  engagement_id: string;
+  type: "git" | "tickets" | "docs";
+  name: string;
+  status: SourceStatus;
+  external_id: string | null;
+  config: Record<string, unknown> | null;
+  error_message: string | null;
+  status_detail: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 async function apiFetch<T>(
   path: string,
-  token: string,
+  token: string | null,
   options: RequestInit = {},
 ): Promise<T> {
-  const response = await fetch(`${API_URL}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-      ...options.headers,
-    },
-  });
+  if (!token) {
+    throw new Error("Not signed in — refresh the page and try again.");
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}${path}`, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        ...options.headers,
+      },
+    });
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
+    throw new Error(
+      `Cannot reach API at ${API_URL}. Start it with: make dev-api (${detail})`,
+    );
+  }
+
   if (!response.ok) {
     const body = await response.text();
-    throw new Error(body || `API error ${response.status}`);
+    let message = body || `API error ${response.status}`;
+    try {
+      const parsed = JSON.parse(body) as { detail?: string };
+      if (parsed.detail) message = parsed.detail;
+    } catch {
+      // keep raw body
+    }
+    if (response.status === 409) {
+      message = "This source is already connected. Use re-sync on the row below.";
+    }
+    throw new Error(message);
   }
   return response.json() as Promise<T>;
 }
@@ -35,6 +74,78 @@ export async function createEngagement(token: string, name: string): Promise<Eng
     method: "POST",
     body: JSON.stringify({ name }),
   });
+}
+
+export async function fetchSources(token: string, engagementId: string): Promise<Source[]> {
+  return apiFetch<Source[]>(`/api/v1/engagements/${engagementId}/sources`, token);
+}
+
+export async function createGitSource(
+  token: string,
+  engagementId: string,
+  repoUrl: string,
+): Promise<Source> {
+  return apiFetch<Source>(`/api/v1/engagements/${engagementId}/sources`, token, {
+    method: "POST",
+    body: JSON.stringify({ type: "git", repo_url: repoUrl }),
+  });
+}
+
+export async function createTicketSource(
+  token: string,
+  engagementId: string,
+  projectKey: string,
+): Promise<Source> {
+  return apiFetch<Source>(`/api/v1/engagements/${engagementId}/sources`, token, {
+    method: "POST",
+    body: JSON.stringify({ type: "tickets", project_key: projectKey }),
+  });
+}
+
+export async function uploadDocSource(
+  token: string,
+  engagementId: string,
+  file: File,
+): Promise<Source> {
+  if (!token) {
+    throw new Error("Not signed in — refresh the page and try again.");
+  }
+
+  const form = new FormData();
+  form.append("file", file);
+  let response: Response;
+  try {
+    response = await fetch(
+      `${API_URL}/api/v1/engagements/${engagementId}/sources/docs/upload`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      },
+    );
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
+    throw new Error(
+      `Cannot reach API at ${API_URL}. Start it with: make dev-api (${detail})`,
+    );
+  }
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(body || `API error ${response.status}`);
+  }
+  return response.json() as Promise<Source>;
+}
+
+export async function resyncSource(
+  token: string,
+  engagementId: string,
+  sourceId: string,
+): Promise<Source> {
+  return apiFetch<Source>(
+    `/api/v1/engagements/${engagementId}/sources/${sourceId}/sync`,
+    token,
+    { method: "POST" },
+  );
 }
 
 export async function checkApiHealth(): Promise<boolean> {

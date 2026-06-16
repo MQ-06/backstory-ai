@@ -70,11 +70,13 @@ export function AppShell({
         </div>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-40 flex items-center justify-between gap-4 border-b border-border bg-background/80 px-6 py-3 backdrop-blur-md">
+        <header className="sticky top-0 z-40 flex items-center justify-between gap-4 border-b border-border bg-background/80 px-4 py-3 backdrop-blur-md sm:px-6">
           <ClerkLoaded>
-            <EngagementSwitcher />
+            <div className="min-w-0 flex-1">
+              <EngagementSwitcher />
+            </div>
           </ClerkLoaded>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             <ThemeToggle />
             <Separator orientation="vertical" className="mx-1 h-6" />
             <OrganizationSwitcher
