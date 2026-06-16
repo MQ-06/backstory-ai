@@ -7,6 +7,7 @@ from fastapi import HTTPException, status
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 
 from app.auth import AuthContext
 from app.models import AuditEvent, Engagement, Source
@@ -73,6 +74,17 @@ async def get_engagement_for_org(
     engagement = result.scalar_one_or_none()
     if engagement is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Engagement not found")
+    return engagement
+
+
+def get_engagement_for_org_sync(
+    db: Session, engagement_id: uuid.UUID, org_id: uuid.UUID
+) -> Engagement:
+    engagement = db.execute(
+        select(Engagement).where(Engagement.id == engagement_id, Engagement.org_id == org_id)
+    ).scalar_one_or_none()
+    if engagement is None:
+        raise ValueError("Engagement not found")
     return engagement
 
 

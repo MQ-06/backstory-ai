@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 from app.config import get_settings
 from app.routers.engagements import router as engagements_router
 from app.routers.sources import router as sources_router
-from app.routers.sse import router as sse_router
+from app.routers.ask import router as ask_router
 
 
 @asynccontextmanager
@@ -41,7 +41,7 @@ def create_app() -> FastAPI:
 
     app.include_router(engagements_router, prefix="/api/v1")
     app.include_router(sources_router, prefix="/api/v1")
-    app.include_router(sse_router, prefix="/api/v1")
+    app.include_router(ask_router, prefix="/api/v1")
     return app
 
 
