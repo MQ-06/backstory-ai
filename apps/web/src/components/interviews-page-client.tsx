@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Mic, ScrollText, Upload } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 
-import { PageHeader } from "@/components/page-header";
+import { WorkspaceHeader } from "@/components/workspace-header";
 import { useEngagement } from "@/components/providers";
 import { VideoClipPlayer } from "@/components/video-clip-player";
 import { Badge } from "@/components/ui/badge";
@@ -191,37 +191,50 @@ export function InterviewsPageClient() {
 
   return (
     <div>
-      <PageHeader
-        title="Interviews"
-        description="Archaeology Brief and Interview Studio — capture expert knowledge with timestamped video."
+      <WorkspaceHeader
+        eyebrow="Expert capture"
+        title="Capture"
+        description="Generate an Archaeology Brief from indexed signals, then record time-coded interviews before knowledge walks out the door."
       />
 
       {!engagementId ? (
-        <p className="text-sm text-muted-foreground">Select an engagement to continue.</p>
+        <div className="rounded-xl border border-dashed border-primary/30 bg-primary/5 px-4 py-3 text-sm text-muted-foreground">
+          Select or create an engagement in the sidebar to run briefs and interviews.
+        </div>
       ) : (
         <>
-          <div className="mb-6 flex gap-2">
-            <Button
-              variant={tab === "brief" ? "default" : "outline"}
-              size="sm"
+          <div className="mb-8 inline-flex rounded-xl border border-border/80 bg-muted/30 p-1">
+            <button
+              type="button"
               onClick={() => setTab("brief")}
+              className={cn(
+                "inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all",
+                tab === "brief"
+                  ? "bg-background text-foreground shadow-soft"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
             >
-              <ScrollText className="mr-2 size-4" />
+              <ScrollText className="size-4" />
               Archaeology Brief
-            </Button>
-            <Button
-              variant={tab === "studio" ? "default" : "outline"}
-              size="sm"
+            </button>
+            <button
+              type="button"
               onClick={() => setTab("studio")}
+              className={cn(
+                "inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all",
+                tab === "studio"
+                  ? "bg-background text-foreground shadow-soft"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
             >
-              <Mic className="mr-2 size-4" />
+              <Mic className="size-4" />
               Interview Studio
-            </Button>
+            </button>
           </div>
 
           {tab === "brief" ? (
             <div className="space-y-6">
-              <Card>
+              <Card className="shadow-soft">
                 <CardHeader>
                   <CardTitle className="text-base">Generate brief</CardTitle>
                   <CardDescription>

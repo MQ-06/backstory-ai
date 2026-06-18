@@ -1,6 +1,6 @@
 import { Building2, Shield, Users } from "lucide-react";
 
-import { PageHeader } from "@/components/page-header";
+import { WorkspaceHeader } from "@/components/workspace-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const SECTIONS = [
@@ -24,8 +24,9 @@ const SECTIONS = [
 export default function AdminPage() {
   return (
     <div>
-      <PageHeader
-        title="Admin"
+      <WorkspaceHeader
+        eyebrow="Organization"
+        title="Settings"
         description="Organization settings, engagement data, and audit — expanded across upcoming sprints."
       />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

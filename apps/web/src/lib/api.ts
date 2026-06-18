@@ -4,12 +4,14 @@ export type Engagement = {
   created_at: string;
 };
 
-export type SourceStatus = "queued" | "processing" | "indexed" | "error";
+export type SourceStatus = "queued" | "processing" | "indexed" | "error" | "draft";
+
+export type SourceType = "git" | "tickets" | "docs" | "interview";
 
 export type Source = {
   id: string;
   engagement_id: string;
-  type: "git" | "tickets" | "docs";
+  type: SourceType;
   name: string;
   status: SourceStatus;
   external_id: string | null;

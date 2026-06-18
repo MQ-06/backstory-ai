@@ -1,6 +1,6 @@
 import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
-import { DM_Sans, Fraunces, JetBrains_Mono } from "next/font/google";
+import { Instrument_Sans, JetBrains_Mono } from "next/font/google";
 
 import { AppProviders } from "@/components/providers";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -9,16 +9,11 @@ import { cn } from "@/lib/utils";
 
 import "./globals.css";
 
-const dmSans = DM_Sans({
+const instrumentSans = Instrument_Sans({
   subsets: ["latin"],
   variable: "--font-sans",
   display: "swap",
-});
-
-const fraunces = Fraunces({
-  subsets: ["latin"],
-  variable: "--font-display",
-  display: "swap",
+  weight: ["400", "500", "600", "700"],
 });
 
 const jetbrainsMono = JetBrains_Mono({
@@ -37,7 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn(dmSans.variable, fraunces.variable, jetbrainsMono.variable)}
+      className={cn(instrumentSans.variable, jetbrainsMono.variable)}
     >
       <body className="min-h-screen font-sans antialiased">
         <ThemeProvider>
@@ -45,8 +40,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <ClerkProvider
               appearance={{
                 variables: {
-                  colorPrimary: "#1e3a5f",
-                  borderRadius: "0.625rem",
+                  colorPrimary: "oklch(0.48 0.10 132)",
+                  borderRadius: "0.75rem",
                   fontFamily: "var(--font-sans), system-ui, sans-serif",
                 },
               }}
