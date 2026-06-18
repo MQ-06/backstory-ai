@@ -1,0 +1,35 @@
+{
+  "verification_cases": [
+    {
+      "id": "cited-supported",
+      "answer": "The payroll job fails on 31-day months [1].",
+      "passage_text": "payroll fails on 31-day months",
+      "citation_type": "code",
+      "expect_pass": true
+    },
+    {
+      "id": "uncited-unsupported",
+      "answer": "The payroll job fails without any citation markers.",
+      "passage_text": "some unrelated context",
+      "citation_type": "doc",
+      "expect_pass": false
+    }
+  ],
+  "refusal_cases": [
+    {
+      "id": "empty-retrieval",
+      "rrf_scores": [],
+      "expect_refusal": true
+    },
+    {
+      "id": "weak-retrieval",
+      "rrf_scores": [0.001],
+      "expect_refusal": true
+    },
+    {
+      "id": "strong-retrieval",
+      "rrf_scores": [0.05],
+      "expect_refusal": false
+    }
+  ]
+}

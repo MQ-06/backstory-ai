@@ -14,6 +14,7 @@ from sse_starlette.sse import EventSourceResponse
 from app.auth import AuthContext, require_org
 from app.db_sync import get_sync_db
 from app.services import rag
+from app.services.observability import trace_generation
 from app.services.sources import get_engagement_for_org_sync
 from app.services.llm import llm_config_error, stream_llm_text
 
@@ -103,11 +104,12 @@ async def _ask_stream(
     collected: list[str] = []
 
     try:
-        async for token in stream_llm_text(
-            system_instruction=system_prompt,
-            user_prompt=user_prompt,
-        ):
-            collected.append(token)
+        with trace_generation("ask", metadata={"engagement_id": str(engagement_id)}):
+            async for token in stream_llm_text(
+                system_instruction=system_prompt,
+                user_prompt=user_prompt,
+            ):
+                collected.append(token)
     except Exception as exc:
         yield _sse("error", str(exc))
         yield _sse("done", {"refused": True, "answer_id": "", "error": str(exc)})

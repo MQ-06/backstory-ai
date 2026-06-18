@@ -64,7 +64,12 @@ class InterviewOut(BaseModel):
 
 
 def _to_out(interview) -> InterviewOut:
-    segments = sorted(interview.segments, key=lambda s: s.segment_index) if interview.segments else []
+    from sqlalchemy import inspect as sa_inspect
+
+    if "segments" in sa_inspect(interview).unloaded:
+        segments = []
+    else:
+        segments = sorted(interview.segments, key=lambda s: s.segment_index) if interview.segments else []
     return InterviewOut(
         id=interview.id,
         engagement_id=interview.engagement_id,

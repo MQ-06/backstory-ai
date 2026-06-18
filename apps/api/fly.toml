@@ -1,0 +1,28 @@
+# Fly.io staging — API + Celery worker
+# Docs: docs/deploy-staging.md
+
+app = "backstory-api-staging"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  API_PORT = "8080"
+  EMBEDDING_PROVIDER = "local"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  memory = "1gb"
+  cpu_kind = "shared"
+  cpus = 1
+
+# Worker process (deploy separately):
+# fly apps create backstory-worker-staging
+# fly deploy --config fly.worker.toml

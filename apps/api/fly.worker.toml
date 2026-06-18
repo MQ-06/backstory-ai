@@ -1,0 +1,17 @@
+# Celery worker on Fly.io — run ingest + transcribe queues
+
+app = "backstory-worker-staging"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile.worker"
+
+[env]
+  EMBEDDING_PROVIDER = "local"
+
+[[vm]]
+  memory = "2gb"
+  cpu_kind = "shared"
+  cpus = 2
+
+# No http_service — worker only
