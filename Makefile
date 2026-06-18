@@ -1,4 +1,4 @@
-.PHONY: help up down db-migrate db-revision dev dev-web dev-api dev-worker test lint install
+.PHONY: help up down db-migrate db-revision demo-seed dev dev-web dev-api dev-worker test lint install
 
 help:
 	@echo "Backstory-AI — dev commands"
@@ -6,6 +6,7 @@ help:
 	@echo "  make up          Start Postgres + Redis (docker)"
 	@echo "  make down        Stop docker services"
 	@echo "  make db-migrate  Run Alembic migrations"
+	@echo "  make demo-seed   Seed payroll demo engagement (set DEMO_CLERK_ORG_ID)"
 	@echo "  make dev         Start web + API (parallel)"
 	@echo "  make dev-worker  Start Celery ingest worker (separate terminal)"
 	@echo "  make test        Run all tests"
@@ -28,6 +29,9 @@ db-migrate:
 
 db-revision:
 	cd apps/api && uv run alembic revision --autogenerate -m "$(name)"
+
+demo-seed:
+	cd apps/api && uv run python scripts/seed_demo.py
 
 dev:
 	@echo "Starting API (8000) + web (3000) — Ctrl+C stops both"

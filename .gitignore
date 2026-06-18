@@ -94,6 +94,7 @@ examples/sessions/*.md
 
 skills/
 scripts/
+!apps/api/scripts/
 prompts/
 examples/
 knowledge/

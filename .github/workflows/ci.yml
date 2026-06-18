@@ -40,6 +40,8 @@ jobs:
       - run: uv run ruff check .
       - run: uv run alembic upgrade head
       - run: uv run pytest -q
+      - name: Eval gate
+        run: uv run python -m app.eval
 
   web:
     runs-on: ubuntu-latest
@@ -62,6 +64,26 @@ jobs:
 
   e2e:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: backstory
+          POSTGRES_PASSWORD: backstory
+          POSTGRES_DB: backstory
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U backstory -d backstory"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql+asyncpg://backstory:backstory@localhost:5432/backstory
+      REDIS_URL: redis://localhost:6379/0
+      API_URL: http://127.0.0.1:8000
+      WEB_URL: http://127.0.0.1:3000
+      CI: "true"
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v4
@@ -78,11 +100,5 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: uv sync --dev
         working-directory: apps/api
-      - run: uv run uvicorn app.main:app --host 127.0.0.1 --port 8000 &
-        working-directory: apps/api
-      - run: sleep 3
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e
-        env:
-          API_URL: http://127.0.0.1:8000
-          CI: "true"
