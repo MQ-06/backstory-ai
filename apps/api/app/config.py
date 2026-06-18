@@ -38,6 +38,10 @@ class Settings(BaseSettings):
     interview_max_upload_bytes: int = 104_857_600  # 100 MB
     transcribe_provider: str = "groq"
     transcribe_model: str = "whisper-large-v3"
+    langfuse_public_key: str = ""
+    langfuse_secret_key: str = ""
+    langfuse_host: str = "https://cloud.langfuse.com"
+    sentry_dsn: str = ""
 
     @property
     def database_url_sync(self) -> str:

@@ -13,6 +13,34 @@
       "passage_text": "some unrelated context",
       "citation_type": "doc",
       "expect_pass": false
+    },
+    {
+      "id": "ticket-cited-supported",
+      "answer": "Ticket #4821 documents the month-end crash [1].",
+      "passage_text": "Ticket #4821 payroll job crashes on month-end",
+      "citation_type": "ticket",
+      "expect_pass": true
+    },
+    {
+      "id": "interview-cited-supported",
+      "answer": "Ahmed explained the banking API workaround [1].",
+      "passage_text": "banking API workaround in payroll_calc.py",
+      "citation_type": "interview",
+      "expect_pass": true
+    },
+    {
+      "id": "multi-claim-partial",
+      "answer": "The batch fails on 31-day months [1]. Ahmed retired last year.",
+      "passage_text": "batch fails on 31-day months",
+      "citation_type": "code",
+      "expect_pass": true
+    },
+    {
+      "id": "wrong-citation-type-still-supported",
+      "answer": "Month-end procedures require manual adjustment [1].",
+      "passage_text": "months with 31 days require manual adjustment",
+      "citation_type": "doc",
+      "expect_pass": true
     }
   ],
   "refusal_cases": [
@@ -30,6 +58,48 @@
       "id": "strong-retrieval",
       "rrf_scores": [0.05],
       "expect_refusal": false
+    },
+    {
+      "id": "borderline-below-threshold",
+      "rrf_scores": [0.004],
+      "expect_refusal": true
+    },
+    {
+      "id": "borderline-above-threshold",
+      "rrf_scores": [0.012],
+      "expect_refusal": false
+    },
+    {
+      "id": "multi-passage-one-strong",
+      "rrf_scores": [0.001, 0.02],
+      "expect_refusal": false
+    }
+  ],
+  "recall_cases": [
+    {
+      "id": "payroll-february",
+      "segment_text": "The month-end payroll batch fails when February has 29 days due to legacy banking API.",
+      "query": "payroll batch fails February 29 days banking API"
+    },
+    {
+      "id": "batch-days-hardcode",
+      "segment_text": "BATCH_DAYS is hardcoded to 30 which breaks on months with 31 days in payroll_calc.py.",
+      "query": "BATCH_DAYS hardcoded 30 payroll 31 days"
+    },
+    {
+      "id": "ticket-4821",
+      "segment_text": "Ticket #4821 payroll job crashes on month-end when calendar has 31 days.",
+      "query": "ticket 4821 payroll crash month-end 31 days"
+    },
+    {
+      "id": "ahmed-workaround",
+      "segment_text": "Ahmed added a date check after the 1996 double-payment incident — never remove it.",
+      "query": "Ahmed date check 1996 double payment never remove"
+    },
+    {
+      "id": "runbook-procedures",
+      "segment_text": "Month-end procedures doc says verify payroll_calc.py batch window before running.",
+      "query": "month-end procedures payroll_calc batch window"
     }
   ]
 }

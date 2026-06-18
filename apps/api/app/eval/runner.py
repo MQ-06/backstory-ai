@@ -1,8 +1,9 @@
-"""Eval gate metrics — faithfulness, refusal, citation correctness."""
+"""Eval gate metrics — faithfulness, refusal, citation correctness, recall@k."""
 
 from __future__ import annotations
 
 import json
+import sys
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
@@ -72,7 +73,7 @@ def run_refusal_cases(cases: list[dict]) -> float:
     settings = get_settings()
     correct = 0
     for case in cases:
-        scores = case.get("rrf_scores") or []
+        scores = sorted(case.get("rrf_scores") or [], reverse=True)
         passages = [
             _mock_passage(i + 1, "fixture context", rrf_score=score)
             for i, score in enumerate(scores)
@@ -94,6 +95,86 @@ def compute_recall_at_k(retrieved_ids: list[uuid.UUID], expected_id: uuid.UUID, 
     return 0.0
 
 
+def run_recall_cases(cases: list[dict], k: int = RECALL_K) -> float:
+    """Average recall@k over fixture cases using ephemeral Postgres seed data."""
+    if not cases:
+        return 1.0
+
+    from sqlalchemy import select
+
+    from app.db_sync import get_sync_db
+    from app.models import Chunk, Engagement, Interview, Org, Source
+    from app.services.hybrid_retrieval import hybrid_retrieve
+    from app.services.transcribe import TranscriptSegmentData
+    from app.services.transcript_ingest import ingest_transcript_segments
+
+    run_id = uuid.uuid4().hex[:8]
+    scores: list[float] = []
+
+    with get_sync_db() as db:
+        org = Org(clerk_org_id=f"org_eval_recall_{run_id}", name="Eval Recall Org")
+        db.add(org)
+        db.flush()
+        engagement = Engagement(org_id=org.id, name=f"Eval Recall {run_id}")
+        db.add(engagement)
+        db.flush()
+
+        source = Source(
+            engagement_id=engagement.id,
+            type="interview",
+            name="Eval recall session",
+            status="draft",
+            external_id=f"interview_source:eval_{run_id}",
+            config={"interview": True},
+        )
+        db.add(source)
+        db.flush()
+
+        interview = Interview(
+            engagement_id=engagement.id,
+            source_id=source.id,
+            clerk_user_id="eval_user",
+            title="Eval recall interview",
+            expert_name="Fixture",
+            status="uploaded",
+        )
+        db.add(interview)
+        db.flush()
+
+        segments = [
+            TranscriptSegmentData(float(i * 10), float(i * 10 + 9), case["segment_text"])
+            for i, case in enumerate(cases)
+        ]
+        ingest_transcript_segments(db, interview, segments)
+        eid = engagement.id
+
+    with get_sync_db() as db:
+        chunks = list(
+            db.execute(
+                select(Chunk)
+                .where(Chunk.engagement_id == eid)
+                .order_by(Chunk.chunk_index)
+            ).scalars()
+        )
+        chunk_by_index = {i: c.id for i, c in enumerate(chunks)}
+
+        for i, case in enumerate(cases):
+            expected_id = chunk_by_index.get(i)
+            if expected_id is None:
+                scores.append(0.0)
+                continue
+            passages = hybrid_retrieve(
+                db,
+                engagement_id=eid,
+                query=case["query"],
+                limit=k,
+            )
+            retrieved_ids = [p.chunk.id for p in passages]
+            scores.append(compute_recall_at_k(retrieved_ids, expected_id, k=k))
+
+    return sum(scores) / len(scores) if scores else 1.0
+
+
 def run_eval_gate(thresholds: EvalThresholds | None = None) -> dict[str, float]:
     thresholds = thresholds or EvalThresholds()
     fixtures = load_fixtures()
@@ -101,11 +182,13 @@ def run_eval_gate(thresholds: EvalThresholds | None = None) -> dict[str, float]:
         fixtures.get("verification_cases", [])
     )
     refusal_accuracy = run_refusal_cases(fixtures.get("refusal_cases", []))
+    recall_at_k = run_recall_cases(fixtures.get("recall_cases", []), k=thresholds.recall_k)
 
     return {
         "unsupported_claim_rate": unsupported_rate,
         "citation_correctness": citation_correctness,
         "refusal_accuracy": refusal_accuracy,
+        "recall_at_k": recall_at_k,
     }
 
 
@@ -115,4 +198,19 @@ def eval_gate_passed(metrics: dict[str, float], thresholds: EvalThresholds | Non
         metrics["unsupported_claim_rate"] <= thresholds.unsupported_claim_rate_max
         and metrics["refusal_accuracy"] >= thresholds.refusal_accuracy_min
         and metrics["citation_correctness"] >= thresholds.citation_correctness_min
+        and metrics.get("recall_at_k", 0.0) >= thresholds.recall_at_k_min
     )
+
+
+def main() -> int:
+    metrics = run_eval_gate()
+    passed = eval_gate_passed(metrics)
+    print("Eval gate metrics:")
+    for key, value in metrics.items():
+        print(f"  {key}: {value:.4f}")
+    print(f"  passed: {passed}")
+    return 0 if passed else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -23,6 +23,7 @@ def test_eval_gate_metrics_pass_thresholds():
     assert metrics["unsupported_claim_rate"] == 0.0
     assert metrics["refusal_accuracy"] >= 0.95
     assert metrics["citation_correctness"] >= 0.90
+    assert metrics["recall_at_k"] >= RECALL_AT_K_MIN
 
 
 def test_recall_at_k_on_seeded_interview(requires_postgres):
