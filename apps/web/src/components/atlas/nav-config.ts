@@ -1,4 +1,5 @@
 import {
+  BookOpen,
   FolderInput,
   MessageSquare,
   Mic,
@@ -35,6 +36,13 @@ export const ATLAS_NAV: AtlasNavItem[] = [
     shortLabel: "Capture",
     icon: Mic,
     description: "Briefs and interviews",
+  },
+  {
+    href: "/library",
+    label: "Library",
+    shortLabel: "Library",
+    icon: BookOpen,
+    description: "Saved receipts & history",
   },
 ];
 

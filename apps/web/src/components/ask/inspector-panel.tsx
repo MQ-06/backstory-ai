@@ -4,27 +4,25 @@ import Link from "next/link";
 import { X, XCircle } from "lucide-react";
 
 import { VideoClipPlayer } from "@/components/video-clip-player";
+import { AnswerReceipt } from "@/components/ask/answer-receipt";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { citationHref } from "@/components/ask/citation-utils";
 import type { AskCitation } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 export function RefusalCard({ reason }: { reason: string }) {
   return (
-    <Card className="border-refusal-foreground/20 bg-refusal shadow-none">
-      <CardHeader className="pb-2">
+    <AnswerReceipt>
+      <div className="px-5 py-5 sm:px-6 sm:py-6">
         <div className="flex items-center gap-2 text-refusal-foreground">
-          <XCircle className="size-5" />
-          <CardTitle className="text-base font-semibold tracking-tight">I don&apos;t have this</CardTitle>
+          <XCircle className="size-5 shrink-0" />
+          <h2 className="font-display text-xl">I don&apos;t have this</h2>
         </div>
-        <CardDescription>
+        <p className="mt-1 text-sm text-muted-foreground">
           Backstory refused to guess — honest refusal is always on.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <p className="text-base leading-relaxed text-muted-foreground">{reason}</p>
-        <div className="mt-4 flex flex-wrap gap-2">
+        </p>
+        <p className="mt-4 text-base leading-relaxed text-muted-foreground">{reason}</p>
+        <div className="mt-5 flex flex-wrap gap-2">
           <Link href="/sources" className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
             Connect sources
           </Link>
@@ -32,8 +30,8 @@ export function RefusalCard({ reason }: { reason: string }) {
             Record interview
           </Link>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </AnswerReceipt>
   );
 }
 
@@ -53,19 +51,21 @@ export function SourceInspector({
     citation.citation_type === "interview" && citation.locator?.interview_id && engagementId;
 
   return (
-    <Card className="border-evidence/30 shadow-soft">
-      <CardHeader className="flex flex-row items-start justify-between gap-2 pb-2">
+    <div className="rounded-xl border border-amber/25 bg-receipt p-4 shadow-soft">
+      <div className="flex items-start justify-between gap-2">
         <div>
-          <CardTitle className="text-base font-semibold tracking-tight">{citation.label}</CardTitle>
-          <CardDescription className="capitalize">{citation.citation_type} receipt</CardDescription>
+          <p className="font-mono text-sm font-semibold text-ink">{citation.label}</p>
+          <p className="mt-0.5 text-xs capitalize text-muted-foreground">
+            {citation.citation_type} receipt
+          </p>
         </div>
         <Button variant="ghost" size="icon" className="size-8 shrink-0" onClick={onClose} aria-label="Close">
           <X className="size-4" />
         </Button>
-      </CardHeader>
-      <CardContent className="space-y-3">
+      </div>
+      <div className="mt-3 space-y-3">
         {citation.snippet ? (
-          <p className="rounded-lg bg-muted/50 p-3 text-sm leading-relaxed text-muted-foreground">
+          <p className="rounded-lg border border-border/60 bg-parchment/60 p-3 text-sm leading-relaxed text-muted-foreground">
             {citation.snippet}
           </p>
         ) : null}
@@ -88,7 +88,7 @@ export function SourceInspector({
             label={citation.label}
           />
         ) : null}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

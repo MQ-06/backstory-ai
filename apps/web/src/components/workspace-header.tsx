@@ -18,15 +18,15 @@ export function WorkspaceHeader({
   return (
     <header
       className={cn(
-        "mb-8 flex flex-col gap-4 border-b border-border/60 pb-6 sm:flex-row sm:items-end sm:justify-between",
+        "mb-8 flex flex-col gap-4 border-b border-border/70 pb-6 sm:flex-row sm:items-end sm:justify-between",
         className,
       )}
     >
       <div className="space-y-2">
         {eyebrow ? (
-          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary">{eyebrow}</p>
+          <p className="section-label text-amber">{eyebrow}</p>
         ) : null}
-        <h1 className="text-2xl font-bold tracking-tight text-balance sm:text-[1.75rem]">{title}</h1>
+        <h1 className="font-display text-3xl tracking-tight text-balance sm:text-[2rem]">{title}</h1>
         {description ? (
           <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-[0.9375rem]">
             {description}

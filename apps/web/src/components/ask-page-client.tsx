@@ -1,19 +1,19 @@
 "use client";
 
 import { useAuth } from "@clerk/nextjs";
-import { Loader2, Send, Sparkles } from "lucide-react";
+import { Loader2, Send } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 
+import { AnswerReceipt, ReceiptFooter } from "@/components/ask/answer-receipt";
+import { CitationChipRow } from "@/components/ask/citation-chip";
 import { RefusalCard, SourceInspector } from "@/components/ask/inspector-panel";
 import { ReceiptRail } from "@/components/ask/receipt-rail";
 import { WorkspaceHeader } from "@/components/workspace-header";
 import { useEngagement } from "@/components/providers";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { streamAsk, type AskCitation, type AskDoneEvent } from "@/lib/api";
-import { cn } from "@/lib/utils";
+import { cn, formatErrorMessage } from "@/lib/utils";
 
 const STARTER_QUESTIONS = [
   "Why does the payroll job fail on months with 31 days?",
@@ -29,6 +29,7 @@ export function AskPageClient() {
   const { getToken } = useAuth();
   const { activeEngagement } = useEngagement();
   const [question, setQuestion] = useState("");
+  const [askedQuestion, setAskedQuestion] = useState("");
   const [status, setStatus] = useState<string | null>(null);
   const [answerText, setAnswerText] = useState("");
   const [citations, setCitations] = useState<AskCitation[]>([]);
@@ -58,6 +59,7 @@ export function AskPageClient() {
     abortRef.current = controller;
 
     resetAnswer();
+    setAskedQuestion(trimmed);
     setIsAsking(true);
 
     try {
@@ -80,7 +82,7 @@ export function AskPageClient() {
           setCitations((prev) => [...prev, citation]);
         },
         onRefusal: (reason) => setRefusalReason(reason),
-        onError: (message) => setError(message),
+        onError: (message) => setError(formatErrorMessage(message, "Ask failed")),
         onDone: (event: AskDoneEvent) => {
           if (event.refused) {
             setRefusalReason((prev) => prev ?? "No grounded evidence found.");
@@ -95,7 +97,7 @@ export function AskPageClient() {
       });
     } catch (err) {
       if (controller.signal.aborted) return;
-      const message = err instanceof Error ? err.message : String(err);
+      const message = formatErrorMessage(err, "Could not complete ask request");
       setError(message);
     } finally {
       setIsAsking(false);
@@ -119,32 +121,21 @@ export function AskPageClient() {
       />
 
       {!engagementId ? (
-        <div className="mb-6 rounded-xl border border-dashed border-primary/30 bg-primary/5 px-4 py-3 text-sm text-muted-foreground">
+        <div className="mb-6 rounded-xl border border-dashed border-amber/35 bg-amber/5 px-4 py-3 text-sm text-muted-foreground">
           Select or create an engagement in the sidebar to query memory.
         </div>
       ) : null}
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_19rem]">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_17.5rem]">
         <div className="min-w-0 space-y-5">
-          <div className="overflow-hidden rounded-2xl border border-border/80 bg-card shadow-card ring-1 ring-black/[0.03] dark:ring-white/[0.04]">
-            <div className="flex items-center justify-between border-b border-border/70 bg-muted/25 px-5 py-3">
-              <div className="flex items-center gap-2">
-                <Sparkles className="size-4 text-primary" />
-                <span className="text-sm font-semibold">Memory query</span>
-              </div>
-              {isAsking ? (
-                <Badge variant="secondary" className="gap-1.5 text-xs font-medium">
-                  <Loader2 className="size-3 animate-spin" />
-                  {status ?? "Thinking…"}
-                </Badge>
-              ) : null}
-            </div>
+          {/* Query input */}
+          <div className="overflow-hidden rounded-xl border border-border/80 bg-receipt shadow-soft">
             <div className="p-5 sm:p-6">
               <Textarea
                 className={cn(
-                  "min-h-[120px] resize-none border-0 bg-transparent text-base leading-relaxed shadow-none",
+                  "min-h-[100px] resize-none border-0 bg-transparent font-display text-lg leading-relaxed shadow-none",
                   "focus-visible:ring-0 focus-visible:ring-offset-0",
-                  "placeholder:text-muted-foreground/60",
+                  "placeholder:text-muted-foreground/50",
                 )}
                 placeholder="Why does the payroll job fail on months with 31 days?"
                 value={question}
@@ -157,29 +148,36 @@ export function AskPageClient() {
                   }
                 }}
               />
-              <div className="mt-4 flex items-center justify-between gap-3">
+              <div className="mt-4 flex items-center justify-between gap-3 border-t border-border/60 pt-4">
                 <p className="text-xs text-muted-foreground">⌘/Ctrl + Enter to send</p>
-                <Button
-                  size="default"
-                  className="gap-2 shadow-md shadow-primary/20"
-                  onClick={() => void handleAsk()}
-                  disabled={isAsking || !engagementId || question.trim().length < 3}
-                >
+                <div className="flex items-center gap-3">
                   {isAsking ? (
-                    <Loader2 className="size-4 animate-spin" />
-                  ) : (
-                    <Send className="size-4" />
-                  )}
-                  Ask
-                </Button>
+                    <span className="flex items-center gap-1.5 text-xs text-amber">
+                      <Loader2 className="size-3 animate-spin" />
+                      {status ?? "Searching…"}
+                    </span>
+                  ) : null}
+                  <Button
+                    size="default"
+                    className="gap-2 bg-ink px-5 text-receipt hover:bg-ink/90"
+                    onClick={() => void handleAsk()}
+                    disabled={isAsking || !engagementId || question.trim().length < 3}
+                  >
+                    {isAsking ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <Send className="size-4" />
+                    )}
+                    Ask
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
 
+          {/* Starter questions */}
           <div>
-            <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
-              Try asking
-            </p>
+            <p className="section-label mb-2.5 text-muted-foreground">Try asking</p>
             <div className="flex flex-wrap gap-2">
               {STARTER_QUESTIONS.map((q) => (
                 <button
@@ -188,9 +186,9 @@ export function AskPageClient() {
                   onClick={() => setQuestion(q)}
                   disabled={isAsking}
                   className={cn(
-                    "max-w-full rounded-xl border border-border/80 bg-card px-3.5 py-2 text-left text-sm transition-all",
-                    "hover:border-primary/35 hover:bg-primary/5 hover:shadow-soft",
-                    question === q && "border-primary/45 bg-primary/8 ring-1 ring-primary/20",
+                    "max-w-full rounded-full border border-border/80 bg-receipt px-4 py-2 text-left text-sm transition-all",
+                    "hover:border-amber/35 hover:bg-amber/5 hover:shadow-soft",
+                    question === q && "border-amber/45 bg-amber/8 ring-1 ring-amber/20",
                   )}
                 >
                   {q}
@@ -199,39 +197,48 @@ export function AskPageClient() {
             </div>
           </div>
 
+          {/* Results */}
           {showResults ? (
             <div className="space-y-5">
               {error ? (
-                <Card className="border-destructive/30 bg-destructive/5">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base text-destructive">
-                      Could not generate answer
-                    </CardTitle>
-                    <CardDescription>
-                      Retrieval may have worked, but the LLM step failed.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="text-sm text-destructive">{error}</CardContent>
-                </Card>
+                <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-5">
+                  <h2 className="font-display text-lg text-destructive">Could not generate answer</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Retrieval may have worked, but the LLM step failed.
+                  </p>
+                  <p className="mt-3 text-sm text-destructive">{error}</p>
+                </div>
               ) : null}
 
               {refusalReason ? <RefusalCard reason={refusalReason} /> : null}
 
               {answerText && !refusalReason ? (
-                <Card className="shadow-soft">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base font-semibold tracking-tight">Answer</CardTitle>
-                    <CardDescription>Claims are tied to receipts on the right.</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="max-w-prose whitespace-pre-wrap text-lg leading-relaxed">
-                      {answerText}
-                    </p>
-                  </CardContent>
-                </Card>
+                <AnswerReceipt>
+                  <div className="px-5 py-4 sm:px-6">
+                    <div className="flex items-start gap-2">
+                      <span className="mt-1.5 size-2 shrink-0 rounded-full bg-proof" aria-hidden />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-muted-foreground">{askedQuestion}</p>
+                        <p className="mt-4 max-w-prose whitespace-pre-wrap text-base leading-[1.75] text-ink">
+                          {answerText}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  {citations.length > 0 ? (
+                    <ReceiptFooter>
+                      <p className="section-label mb-3 text-muted-foreground">Receipts</p>
+                      <CitationChipRow
+                        citations={citations}
+                        selectedId={selectedId}
+                        onSelect={setSelectedCitation}
+                        getKey={citationKey}
+                      />
+                    </ReceiptFooter>
+                  ) : null}
+                </AnswerReceipt>
               ) : null}
 
-              {/* Mobile: inspector below answer */}
               <div className="lg:hidden">
                 <SourceInspector
                   citation={selectedCitation}
@@ -244,7 +251,7 @@ export function AskPageClient() {
         </div>
 
         <div className="hidden xl:block">
-          <div className="sticky top-[4.5rem] space-y-3">
+          <div className="sticky top-14 space-y-3">
             <ReceiptRail
               citations={citations}
               selectedId={selectedId}
@@ -261,7 +268,6 @@ export function AskPageClient() {
         </div>
       </div>
 
-      {/* Mobile receipt list when results exist */}
       {showResults && citations.length > 0 ? (
         <div className="mt-6 xl:hidden">
           <ReceiptRail

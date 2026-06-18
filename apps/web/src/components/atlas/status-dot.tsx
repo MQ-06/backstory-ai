@@ -7,10 +7,10 @@ type StatusDotProps = {
 };
 
 const STATUS_CLASS = {
-  ready: "bg-emerald-500",
-  partial: "bg-amber-500",
+  ready: "bg-proof",
+  partial: "bg-amber",
   empty: "bg-muted-foreground/40",
-  loading: "bg-primary animate-pulse",
+  loading: "bg-amber animate-pulse",
 } as const;
 
 export function StatusDot({ status = "empty", className, label }: StatusDotProps) {

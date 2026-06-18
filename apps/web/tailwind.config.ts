@@ -1,6 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
+  darkMode: "class",
   content: ["./src/**/*.{js,ts,jsx,tsx,mdx}"],
   theme: {
     extend: {
@@ -10,6 +11,18 @@ const config: Config = {
         ring: "var(--ring)",
         background: "var(--background)",
         foreground: "var(--foreground)",
+        ink: "var(--ink)",
+        parchment: "var(--parchment)",
+        receipt: "var(--receipt)",
+        amber: {
+          DEFAULT: "var(--amber)",
+          foreground: "var(--ink)",
+        },
+        proof: "var(--proof)",
+        archive: {
+          deep: "var(--archive-deep)",
+          "deep-foreground": "var(--archive-deep-foreground)",
+        },
         muted: {
           DEFAULT: "var(--muted)",
           foreground: "var(--muted-foreground)",
@@ -68,16 +81,19 @@ const config: Config = {
       },
       fontFamily: {
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],
+        display: ["var(--font-display)", "Georgia", "serif"],
         mono: ["var(--font-mono)", "ui-monospace", "monospace"],
       },
       letterSpacing: {
         tightest: "-0.04em",
+        archive: "0.16em",
       },
       boxShadow: {
-        soft: "0 1px 2px oklch(0.2 0.02 286 / 4%)",
-        card: "0 1px 2px oklch(0.2 0.02 286 / 5%), 0 12px 32px -16px oklch(0.2 0.02 286 / 12%)",
-        glow: "0 0 40px -10px var(--glow-violet)",
-        rail: "inset -1px 0 0 oklch(1 0 0 / 6%)",
+        soft: "0 1px 3px color-mix(in srgb, var(--ink) 6%, transparent)",
+        card: "0 1px 2px color-mix(in srgb, var(--ink) 5%, transparent), 0 12px 32px -16px color-mix(in srgb, var(--ink) 12%, transparent)",
+        receipt:
+          "0 1px 2px color-mix(in srgb, var(--ink) 4%, transparent), 0 8px 32px -12px color-mix(in srgb, var(--ink) 10%, transparent)",
+        rail: "inset -1px 0 0 color-mix(in srgb, var(--ink) 6%, transparent)",
       },
       maxWidth: {
         prose: "65ch",

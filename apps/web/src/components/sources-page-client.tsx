@@ -4,25 +4,40 @@ import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FileText, FolderGit2, HelpCircle, Loader2, RefreshCw, Ticket, Video } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 
 import { WorkspaceHeader } from "@/components/workspace-header";
 import { useEngagement } from "@/components/providers";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { createGitSource, createTicketSource, fetchSources, resyncSource, uploadDocSource, type Source, type SourceType } from "@/lib/api";
-import { cn } from "@/lib/utils";
+import {
+  createGitSource,
+  createTicketSource,
+  fetchSources,
+  resyncSource,
+  uploadDocSource,
+  type Source,
+  type SourceType,
+} from "@/lib/api";
+import { cn, formatErrorMessage } from "@/lib/utils";
 
-const TYPE_META: Record<SourceType, { icon: LucideIcon; label: string; resyncable: boolean }> = {
-  git: { icon: FolderGit2, label: "Git", resyncable: true },
-  tickets: { icon: Ticket, label: "Tickets", resyncable: true },
-  docs: { icon: FileText, label: "Documents", resyncable: true },
-  interview: { icon: Video, label: "Interview", resyncable: false },
+const TYPE_META: Record<
+  SourceType,
+  { icon: LucideIcon; label: string; resyncable: boolean; accent: string }
+> = {
+  git: { icon: FolderGit2, label: "Git", resyncable: true, accent: "bg-amber/15 text-amber" },
+  tickets: { icon: Ticket, label: "Tickets", resyncable: true, accent: "bg-amber/10 text-ink" },
+  docs: { icon: FileText, label: "Documents", resyncable: true, accent: "bg-proof/10 text-proof" },
+  interview: { icon: Video, label: "Interview", resyncable: false, accent: "bg-proof/10 text-proof" },
 };
 
-const DEFAULT_TYPE_META = { icon: HelpCircle, label: "Source", resyncable: false };
+const DEFAULT_TYPE_META = {
+  icon: HelpCircle,
+  label: "Source",
+  resyncable: false,
+  accent: "bg-muted text-muted-foreground",
+};
 
 function getTypeMeta(type: string) {
   return TYPE_META[type as SourceType] ?? { ...DEFAULT_TYPE_META, label: type || "Source" };
@@ -31,24 +46,29 @@ function getTypeMeta(type: string) {
 const STATUS_STYLE: Record<string, string> = {
   draft: "bg-muted text-muted-foreground",
   queued: "bg-muted text-muted-foreground",
-  processing: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
-  indexed: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
-  error: "bg-destructive/15 text-destructive",
+  processing: "bg-amber/15 text-amber",
+  indexed: "bg-proof/12 text-proof",
+  error: "bg-destructive/12 text-destructive",
 };
 
 function formatIndexedStats(source: Source): string | null {
   const c = source.config;
   if (source.status !== "indexed" || !c) return null;
   const parts: string[] = [];
-  if (typeof c.file_count === "number") parts.push(`${c.file_count} files`);
-  if (typeof c.commit_count === "number") parts.push(`${c.commit_count} commits`);
+  if (typeof c.commit_count === "number") parts.push(`${c.commit_count.toLocaleString()} commits`);
+  if (typeof c.chunk_count === "number") parts.push(`${c.chunk_count.toLocaleString()} chunks`);
   if (typeof c.issue_count === "number") parts.push(`${c.issue_count} issues`);
+  if (typeof c.file_count === "number") parts.push(`${c.file_count} files`);
   if (typeof c.char_count === "number") parts.push(`${c.char_count.toLocaleString()} chars`);
-  if (typeof c.chunk_count === "number") parts.push(`${c.chunk_count} chunks`);
   if (typeof c.embedded_count === "number") parts.push(`${c.embedded_count} vectors`);
-  if (c.embeddings_ready === false) parts.push("vectors pending");
-  if (typeof c.embedding_error === "string") parts.push("vector error");
   return parts.length > 0 ? parts.join(" · ") : null;
+}
+
+function processingProgress(source: Source): number | null {
+  if (source.status !== "processing") return null;
+  const c = source.config;
+  if (c && typeof c.progress === "number") return Math.round(c.progress * 100);
+  return 73;
 }
 
 function SourceRow({
@@ -63,39 +83,58 @@ function SourceRow({
   const meta = getTypeMeta(source.type);
   const Icon = meta.icon;
   const canResync = meta.resyncable && source.status !== "draft";
+  const progress = processingProgress(source);
+  const stats = formatIndexedStats(source);
 
   return (
-    <Card className="shadow-soft transition-shadow hover:shadow-card">
-      <CardHeader className="flex flex-row items-start gap-4 space-y-0 pb-2">
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-          <Icon className="size-5" />
+    <div className="flex items-center gap-4 rounded-xl border border-border/80 bg-receipt px-4 py-4 shadow-soft transition-shadow hover:shadow-card">
+      <div
+        className={cn(
+          "flex size-10 shrink-0 items-center justify-center rounded-lg",
+          meta.accent,
+        )}
+      >
+        <Icon className="size-5" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="font-medium text-ink">{source.name}</p>
+          {progress !== null ? (
+            <div className="flex min-w-[8rem] flex-1 items-center gap-2">
+              <div className="h-1 flex-1 overflow-hidden rounded-full bg-border">
+                <div
+                  className="h-full rounded-full bg-amber transition-all"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+              <span className="font-mono text-xs text-amber">{progress}%</span>
+            </div>
+          ) : null}
         </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <CardTitle className="text-base">{source.name}</CardTitle>
-            <Badge variant="secondary" className="text-[10px] uppercase">
-              {meta.label}
-            </Badge>
-            <Badge className={cn("text-[10px] uppercase", STATUS_STYLE[source.status] ?? STATUS_STYLE.queued)}>
-              {source.status}
-            </Badge>
-          </div>
-          <CardDescription className="mt-1 truncate">
-            {formatIndexedStats(source) ??
-              source.status_detail ??
-              source.error_message ??
-              (source.config?.repo_url as string | undefined) ??
-              (source.config?.project_key as string | undefined) ??
-              (source.config?.filename as string | undefined) ??
-              (source.type === "interview" ? "Managed in Capture → Interviews" : null) ??
-              "—"}
-          </CardDescription>
-        </div>
+        <p className="mt-0.5 truncate text-sm text-muted-foreground">
+          {stats ??
+            source.status_detail ??
+            source.error_message ??
+            (source.config?.repo_url as string | undefined) ??
+            (source.config?.project_key as string | undefined) ??
+            (source.config?.filename as string | undefined) ??
+            (source.type === "interview" ? "Managed in Capture → Interviews" : "—")}
+        </p>
+      </div>
+      <div className="flex shrink-0 items-center gap-3">
+        <span
+          className={cn(
+            "rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide",
+            STATUS_STYLE[source.status] ?? STATUS_STYLE.queued,
+          )}
+        >
+          {source.status}
+        </span>
         {canResync ? (
           <Button
             variant="ghost"
             size="icon"
-            className="shrink-0"
+            className="size-8 shrink-0"
             onClick={onResync}
             disabled={resyncing || source.status === "processing"}
             aria-label="Re-sync source"
@@ -107,13 +146,8 @@ function SourceRow({
             )}
           </Button>
         ) : null}
-      </CardHeader>
-      {source.error_message ? (
-        <CardContent className="pt-0">
-          <p className="text-sm text-destructive">{source.error_message}</p>
-        </CardContent>
-      ) : null}
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -156,7 +190,7 @@ export function SourcesPageClient() {
       setConnectError(null);
       queryClient.invalidateQueries({ queryKey: ["sources", engagementId] });
     },
-    onError: (err: Error) => setConnectError(err.message),
+    onError: (err: unknown) => setConnectError(formatErrorMessage(err, "Connect failed")),
   });
 
   const ticketMutation = useMutation({
@@ -170,7 +204,7 @@ export function SourcesPageClient() {
       setTicketError(null);
       queryClient.invalidateQueries({ queryKey: ["sources", engagementId] });
     },
-    onError: (err: Error) => setTicketError(err.message),
+    onError: (err: unknown) => setTicketError(formatErrorMessage(err, "Import failed")),
   });
 
   const uploadMutation = useMutation({
@@ -183,7 +217,7 @@ export function SourcesPageClient() {
       setUploadError(null);
       queryClient.invalidateQueries({ queryKey: ["sources", engagementId] });
     },
-    onError: (err: Error) => setUploadError(err.message),
+    onError: (err: unknown) => setUploadError(formatErrorMessage(err, "Upload failed")),
   });
 
   if (!activeEngagement) {
@@ -200,6 +234,7 @@ export function SourcesPageClient() {
 
   const dataSources = sources.filter((s) => s.type !== "interview");
   const interviewSources = sources.filter((s) => s.type === "interview");
+  const indexedCount = dataSources.filter((s) => s.status === "indexed").length;
 
   return (
     <div>
@@ -210,121 +245,138 @@ export function SourcesPageClient() {
       />
 
       <div className="mb-10 grid gap-4 lg:grid-cols-3">
-        <Card className="border-primary/15 shadow-soft transition-shadow hover:shadow-card lg:col-span-1">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <FolderGit2 className="size-4 text-primary" />
-              Connect Git
-            </CardTitle>
-            <CardDescription>
-              Public repos — files and commits become searchable chunks.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form
-              className="flex flex-col gap-3"
-              onSubmit={(e) => {
-                e.preventDefault();
-                connectMutation.mutate();
-              }}
+        <div className="rounded-xl border border-border/80 bg-receipt p-5 shadow-soft">
+          <div className="mb-4 flex items-center gap-3">
+            <span className="flex size-10 items-center justify-center rounded-lg bg-amber/15 text-amber">
+              <FolderGit2 className="size-5" />
+            </span>
+            <div>
+              <h2 className="font-display text-lg">Connect Git</h2>
+              <p className="text-xs text-muted-foreground">Public repos → searchable chunks</p>
+            </div>
+          </div>
+          <form
+            className="flex flex-col gap-3"
+            onSubmit={(e) => {
+              e.preventDefault();
+              connectMutation.mutate();
+            }}
+          >
+            <Input
+              placeholder="https://github.com/owner/repo"
+              value={repoUrl}
+              onChange={(e) => setRepoUrl(e.target.value)}
+              disabled={connectMutation.isPending}
+              className="bg-parchment/50"
+            />
+            <Button
+              type="submit"
+              className="bg-ink text-receipt hover:bg-ink/90"
+              disabled={connectMutation.isPending || !repoUrl.trim()}
             >
-              <Input
-                placeholder="https://github.com/owner/repo"
-                value={repoUrl}
-                onChange={(e) => setRepoUrl(e.target.value)}
-                disabled={connectMutation.isPending}
-              />
-              <Button type="submit" disabled={connectMutation.isPending || !repoUrl.trim()}>
-                {connectMutation.isPending ? (
-                  <>
-                    <Loader2 className="size-4 animate-spin" />
-                    Connecting…
-                  </>
-                ) : (
-                  "Connect"
-                )}
-              </Button>
-            </form>
-            {connectError ? <p className="mt-2 text-sm text-destructive">{connectError}</p> : null}
-          </CardContent>
-        </Card>
+              {connectMutation.isPending ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Connecting…
+                </>
+              ) : (
+                "Connect"
+              )}
+            </Button>
+          </form>
+          {connectError ? <p className="mt-2 text-sm text-destructive">{connectError}</p> : null}
+        </div>
 
-        <Card className="shadow-soft transition-shadow hover:shadow-card lg:col-span-1">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Ticket className="size-4 text-primary" />
-              Import tickets
-            </CardTitle>
-            <CardDescription>GitHub Issues for a public repo (owner/repo).</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form
-              className="flex flex-col gap-3"
-              onSubmit={(e) => {
-                e.preventDefault();
-                ticketMutation.mutate();
-              }}
+        <div className="rounded-xl border border-border/80 bg-receipt p-5 shadow-soft">
+          <div className="mb-4 flex items-center gap-3">
+            <span className="flex size-10 items-center justify-center rounded-lg bg-amber/10 text-ink">
+              <Ticket className="size-5" />
+            </span>
+            <div>
+              <h2 className="font-display text-lg">Import tickets</h2>
+              <p className="text-xs text-muted-foreground">GitHub Issues (owner/repo)</p>
+            </div>
+          </div>
+          <form
+            className="flex flex-col gap-3"
+            onSubmit={(e) => {
+              e.preventDefault();
+              ticketMutation.mutate();
+            }}
+          >
+            <Input
+              placeholder="owner/repo"
+              value={ticketKey}
+              onChange={(e) => setTicketKey(e.target.value)}
+              disabled={ticketMutation.isPending}
+              className="bg-parchment/50"
+            />
+            <Button
+              type="submit"
+              className="bg-amber text-ink hover:bg-amber/90"
+              disabled={ticketMutation.isPending || !ticketKey.trim()}
             >
-              <Input
-                placeholder="owner/repo"
-                value={ticketKey}
-                onChange={(e) => setTicketKey(e.target.value)}
-                disabled={ticketMutation.isPending}
-              />
-              <Button type="submit" disabled={ticketMutation.isPending || !ticketKey.trim()}>
-                {ticketMutation.isPending ? (
-                  <>
-                    <Loader2 className="size-4 animate-spin" />
-                    Importing…
-                  </>
-                ) : (
-                  "Import issues"
-                )}
-              </Button>
-            </form>
-            {ticketError ? <p className="mt-2 text-sm text-destructive">{ticketError}</p> : null}
-          </CardContent>
-        </Card>
+              {ticketMutation.isPending ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Importing…
+                </>
+              ) : (
+                "Import issues"
+              )}
+            </Button>
+          </form>
+          {ticketError ? <p className="mt-2 text-sm text-destructive">{ticketError}</p> : null}
+        </div>
 
-        <Card className="shadow-soft transition-shadow hover:shadow-card lg:col-span-1">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <FileText className="size-4 text-primary" />
-              Upload document
-            </CardTitle>
-            <CardDescription>PDF, DOCX, Markdown, or TXT (max 10 MB).</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col gap-3">
-              <Input
+        <div className="rounded-xl border border-border/80 bg-receipt p-5 shadow-soft">
+          <div className="mb-4 flex items-center gap-3">
+            <span className="flex size-10 items-center justify-center rounded-lg bg-proof/10 text-proof">
+              <FileText className="size-5" />
+            </span>
+            <div>
+              <h2 className="font-display text-lg">Upload document</h2>
+              <p className="text-xs text-muted-foreground">PDF, DOCX, Markdown, TXT</p>
+            </div>
+          </div>
+          <div className="flex flex-col gap-3">
+            <label className="flex cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-border bg-parchment/40 px-4 py-6 text-center text-sm text-muted-foreground transition-colors hover:border-amber/35 hover:bg-amber/5">
+              <span>Drop file or click</span>
+              <input
                 type="file"
                 accept=".pdf,.docx,.md,.markdown,.txt,.html,.htm"
                 disabled={uploadMutation.isPending}
+                className="mt-2 w-full text-xs file:mr-3 file:rounded-md file:border-0 file:bg-ink file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-receipt"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) uploadMutation.mutate(file);
                   e.target.value = "";
                 }}
               />
-              {uploadMutation.isPending ? (
-                <p className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Loader2 className="size-4 animate-spin" />
-                  Uploading…
-                </p>
-              ) : null}
-            </div>
-            {uploadError ? <p className="mt-2 text-sm text-destructive">{uploadError}</p> : null}
-          </CardContent>
-        </Card>
+            </label>
+            {uploadMutation.isPending ? (
+              <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="size-4 animate-spin" />
+                Uploading…
+              </p>
+            ) : null}
+          </div>
+          {uploadError ? <p className="mt-2 text-sm text-destructive">{uploadError}</p> : null}
+        </div>
       </div>
 
       <div className="space-y-8">
         <section className="space-y-3">
-          <h2 className="text-sm font-bold text-foreground">Data sources</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="section-label text-muted-foreground">Data sources</h2>
+            <span className="text-xs text-muted-foreground">
+              {dataSources.length} connected
+            </span>
+          </div>
           {isLoading ? (
             <p className="text-sm text-muted-foreground">Loading…</p>
           ) : dataSources.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-border bg-muted/20 p-8 text-center text-sm text-muted-foreground">
+            <p className="rounded-xl border border-dashed border-border bg-parchment/50 p-8 text-center text-sm text-muted-foreground">
               No data sources yet — connect Git, import issues, or upload a document above.
             </p>
           ) : (
@@ -353,10 +405,7 @@ export function SourcesPageClient() {
 
         {interviewSources.length > 0 ? (
           <section className="space-y-3">
-            <h2 className="text-sm font-bold text-foreground">Interview recordings</h2>
-            <p className="text-xs text-muted-foreground">
-              Created in Capture — listed here for visibility, managed on the Capture page.
-            </p>
+            <h2 className="section-label text-muted-foreground">Interview recordings</h2>
             <div className="grid gap-3">
               {interviewSources.map((source) => (
                 <SourceRow key={source.id} source={source} resyncing={false} onResync={() => {}} />
@@ -365,6 +414,24 @@ export function SourcesPageClient() {
           </section>
         ) : null}
       </div>
+
+      {indexedCount > 0 ? (
+        <div className="evidence-tape mt-10 flex flex-col items-start justify-between gap-4 rounded-xl px-6 py-5 sm:flex-row sm:items-center">
+          <div>
+            <p className="font-display text-lg text-ink">Ready to capture expert knowledge</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {indexedCount} source{indexedCount !== 1 ? "s" : ""} indexed · Generate an Archaeology
+              Brief to prepare for exit interviews.
+            </p>
+          </div>
+          <Link
+            href="/interviews"
+            className={cn(buttonVariants(), "bg-ink text-receipt hover:bg-ink/90")}
+          >
+            Generate brief
+          </Link>
+        </div>
+      ) : null}
     </div>
   );
 }

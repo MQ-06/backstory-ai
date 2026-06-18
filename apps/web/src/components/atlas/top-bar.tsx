@@ -9,28 +9,30 @@ import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { useEngagement } from "@/components/providers";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 
-const PAGE_TITLES: Record<string, { title: string; parent?: string }> = {
-  "/ask": { title: "Ask" },
-  "/sources": { title: "Sources" },
-  "/interviews": { title: "Capture" },
-  "/admin": { title: "Settings" },
-  "/library": { title: "Library" },
+const PAGE_TITLES: Record<string, string> = {
+  "/ask": "Ask",
+  "/sources": "Sources",
+  "/interviews": "Capture",
+  "/admin": "Settings",
+  "/library": "Library",
 };
 
-function pageMeta(pathname: string) {
+function pageTitle(pathname: string) {
   const match = Object.entries(PAGE_TITLES).find(([path]) => pathname.startsWith(path));
-  return match?.[1] ?? { title: "Workspace" };
+  return match?.[1] ?? "Workspace";
 }
 
 export function AtlasTopBar() {
   const pathname = usePathname();
-  const meta = pageMeta(pathname);
+  const { activeEngagement } = useEngagement();
+  const title = pageTitle(pathname);
 
   return (
-    <header className="sticky top-0 z-40 flex h-[3.25rem] shrink-0 items-center justify-between gap-4 border-b border-border/80 bg-background/90 px-4 backdrop-blur-xl sm:px-6">
+    <header className="sticky top-0 z-40 flex h-12 shrink-0 items-center justify-between gap-4 border-b border-border/70 bg-background/90 px-4 backdrop-blur-md sm:px-6">
       <div className="flex min-w-0 items-center gap-2 text-sm">
         <Link
           href="/ask"
@@ -39,10 +41,16 @@ export function AtlasTopBar() {
           Backstory
         </Link>
         <ChevronRight className="size-3.5 text-muted-foreground/50 lg:hidden" aria-hidden />
-        <span className={cn("truncate font-semibold text-foreground")}>{meta.title}</span>
+        <span className="text-muted-foreground">{title}</span>
+        {activeEngagement ? (
+          <>
+            <ChevronRight className="size-3.5 text-muted-foreground/40" aria-hidden />
+            <span className="truncate font-medium text-foreground">{activeEngagement.name}</span>
+          </>
+        ) : null}
       </div>
 
-      <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+      <div className="flex shrink-0 items-center gap-2">
         <ThemeToggle />
         <ClerkLoaded>
           <OrganizationSwitcher
@@ -51,7 +59,7 @@ export function AtlasTopBar() {
               elements: {
                 rootBox: "hidden sm:flex items-center",
                 organizationSwitcherTrigger:
-                  "rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-medium shadow-soft",
+                  "rounded-lg border border-border bg-receipt px-2.5 py-1.5 text-xs font-medium shadow-soft",
               },
             }}
           />

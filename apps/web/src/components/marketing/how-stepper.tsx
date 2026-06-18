@@ -42,20 +42,20 @@ export function HowStepper() {
               className={cn(
                 "group flex items-start gap-4 rounded-2xl border p-5 text-left transition-all duration-300",
                 isActive
-                  ? "border-primary/40 bg-primary/10 shadow-lg shadow-primary/10"
-                  : "border-transparent bg-transparent hover:border-foreground/10 hover:bg-muted/40",
+                  ? "border-amber/40 bg-amber/8 shadow-soft"
+                  : "border-transparent bg-transparent hover:border-border hover:bg-parchment/60",
               )}
             >
               <span
                 className={cn(
                   "font-mono text-sm font-bold transition-colors",
-                  isActive ? "text-primary" : "text-muted-foreground",
+                  isActive ? "text-amber" : "text-muted-foreground",
                 )}
               >
                 {item.step}
               </span>
               <div>
-                <h3 className="text-lg font-bold tracking-tight">{item.title}</h3>
+                <h3 className="font-display text-lg tracking-tight">{item.title}</h3>
                 <p className="mt-1 text-sm text-muted-foreground">{item.text}</p>
               </div>
             </button>
@@ -67,10 +67,8 @@ export function HowStepper() {
         key={active}
         className="marketing-feature-card rounded-2xl p-8 animate-fade-up"
       >
-        <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary">
-          Step {current.step}
-        </p>
-        <h3 className="mt-3 text-2xl font-bold tracking-tight">{current.title}</h3>
+        <p className="section-label text-amber">Step {current.step}</p>
+        <h3 className="mt-3 font-display text-2xl tracking-tight">{current.title}</h3>
         <p className="mt-4 text-base leading-relaxed text-muted-foreground">{current.detail}</p>
         <div className="mt-8 flex gap-2">
           {STEPS.map((_, i) => (
@@ -81,7 +79,7 @@ export function HowStepper() {
               onClick={() => setActive(i)}
               className={cn(
                 "h-1 flex-1 rounded-full transition-all duration-300",
-                i === active ? "bg-primary" : "bg-foreground/10 hover:bg-foreground/20",
+                i === active ? "bg-amber" : "bg-border hover:bg-muted-foreground/30",
               )}
             />
           ))}

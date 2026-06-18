@@ -4,6 +4,7 @@ import { useAuth } from "@clerk/nextjs";
 import { useEffect, useRef, useState } from "react";
 
 import { getInterviewMediaBlobUrl } from "@/lib/api";
+import { formatErrorMessage } from "@/lib/utils";
 
 type VideoClipPlayerProps = {
   engagementId: string;
@@ -37,7 +38,7 @@ export function VideoClipPlayer({
         if (!cancelled) setSrc(objectUrl);
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : String(err));
+          setError(formatErrorMessage(err, "Could not load clip"));
         }
       }
     }
@@ -71,7 +72,13 @@ export function VideoClipPlayer({
   return (
     <div className="space-y-3">
       {label ? <p className="text-sm font-medium">{label}</p> : null}
-      <video ref={videoRef} src={src} controls className="w-full rounded-lg border border-border" />
+      <video
+        ref={videoRef}
+        src={src}
+        controls
+        className="w-full rounded-lg border border-border"
+        onError={() => setError("Could not play interview clip")}
+      />
       {snippet ? (
         <p className="rounded-lg bg-muted/50 p-3 text-sm text-muted-foreground">{snippet}</p>
       ) : null}

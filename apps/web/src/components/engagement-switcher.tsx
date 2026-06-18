@@ -13,7 +13,7 @@ import {
   SelectTrigger,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
+import { cn, formatErrorMessage } from "@/lib/utils";
 
 export function EngagementSwitcher({ variant = "sidebar" }: { variant?: "sidebar" | "inline" }) {
   const { engagements, activeEngagement, setActiveEngagementId, createNew, isLoading } =
@@ -21,6 +21,7 @@ export function EngagementSwitcher({ variant = "sidebar" }: { variant?: "sidebar
   const [name, setName] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
 
   if (isLoading) {
     return (
@@ -39,10 +40,13 @@ export function EngagementSwitcher({ variant = "sidebar" }: { variant?: "sidebar
           ev.preventDefault();
           if (!name.trim()) return;
           setCreating(true);
+          setCreateError(null);
           try {
             await createNew(name.trim());
             setName("");
             setShowCreate(false);
+          } catch (err) {
+            setCreateError(formatErrorMessage(err, "Could not create engagement"));
           } finally {
             setCreating(false);
           }
@@ -59,7 +63,7 @@ export function EngagementSwitcher({ variant = "sidebar" }: { variant?: "sidebar
           autoFocus
         />
         <div className="flex gap-2">
-          <Button type="submit" size="sm" className="h-8 flex-1" disabled={creating || !name.trim()}>
+          <Button type="submit" size="sm" className="h-8 flex-1 bg-amber text-ink hover:bg-amber/90" disabled={creating || !name.trim()}>
             <Check className="size-3.5" />
             {creating ? "Creating…" : "Create"}
           </Button>
@@ -78,6 +82,7 @@ export function EngagementSwitcher({ variant = "sidebar" }: { variant?: "sidebar
             <X className="size-4" />
           </Button>
         </div>
+        {createError ? <p className="text-xs text-red-300">{createError}</p> : null}
       </form>
     );
   }

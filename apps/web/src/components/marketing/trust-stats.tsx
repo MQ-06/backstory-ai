@@ -32,7 +32,7 @@ function AnimatedStat({ target, suffix = "" }: { target: number; suffix?: string
   }, [inView, target]);
 
   return (
-    <p ref={ref as RefObject<HTMLParagraphElement>} className="text-4xl font-bold text-primary">
+    <p ref={ref as RefObject<HTMLParagraphElement>} className="font-display text-4xl text-amber">
       {n}
       {suffix}
     </p>
@@ -50,7 +50,7 @@ export function TrustStats() {
           {stat.animate ? (
             <AnimatedStat target={stat.display as number} suffix={stat.suffix} />
           ) : (
-            <p className="text-4xl font-bold text-primary">{stat.display}</p>
+            <p className="font-display text-4xl text-amber">{stat.display}</p>
           )}
           <p className="mt-2 text-xs leading-snug text-muted-foreground">{stat.label}</p>
         </div>

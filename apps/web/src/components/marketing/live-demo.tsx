@@ -3,13 +3,15 @@
 import { FileCode2, Ticket, Video } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
+import { CitationChip } from "@/components/ask/citation-chip";
+import { AnswerReceipt, ReceiptFooter } from "@/components/ask/answer-receipt";
 import { cn } from "@/lib/utils";
 
 type Citation = {
   id: string;
   icon: typeof FileCode2;
   label: string;
-  tone: "code" | "ticket" | "video";
+  variant: "code" | "ticket" | "interview";
   snippet: string;
 };
 
@@ -36,21 +38,21 @@ const SCENARIOS: Scenario[] = [
         id: "code",
         icon: FileCode2,
         label: "payroll_calc.py:142",
-        tone: "code",
+        variant: "code",
         snippet: "BATCH_DAYS = 30  # FIXME: breaks on 31-day months",
       },
       {
         id: "ticket",
         icon: Ticket,
         label: "JIRA-4821",
-        tone: "ticket",
+        variant: "ticket",
         snippet: "Regulatory reporting requires calendar-month boundaries; hard-coded 30 rejected in UAT.",
       },
       {
         id: "video",
         icon: Video,
         label: "Interview @ 04:12",
-        tone: "video",
+        variant: "interview",
         snippet: "Expert: \"We never fixed it — finance runs a manual patch every January and March.\"",
       },
     ],
@@ -77,14 +79,14 @@ const SCENARIOS: Scenario[] = [
         id: "code2",
         icon: FileCode2,
         label: "config/payroll.yml:8",
-        tone: "code",
+        variant: "code",
         snippet: "OVERRIDE_PAYROLL: true  # emergency path — see JIRA-5102",
       },
       {
         id: "ticket2",
         icon: Ticket,
         label: "JIRA-5102",
-        tone: "ticket",
+        variant: "ticket",
         snippet: "Approved by CFO 2018-11-02. Must expire after migration phase 2.",
       },
     ],
@@ -115,7 +117,7 @@ function Typewriter({ text, active }: { text: string; active: boolean }) {
     <span>
       {shown}
       {active && shown.length < text.length ? (
-        <span className="ml-0.5 inline-block h-4 w-0.5 animate-pulse bg-primary align-middle" />
+        <span className="ml-0.5 inline-block h-4 w-0.5 animate-pulse bg-amber align-middle" />
       ) : null}
     </span>
   );
@@ -142,40 +144,22 @@ export function LiveDemo() {
 
   return (
     <div className="animate-float-gentle relative mx-auto max-w-md lg:max-w-none">
-      <div
-        className="absolute -inset-10 rounded-[2.5rem] blur-3xl transition-opacity duration-500"
-        style={{
-          background:
-            scenario.kind === "refusal"
-              ? "radial-gradient(ellipse at center, oklch(0.12 0.006 132 / 40%), transparent 70%)"
-              : "radial-gradient(ellipse at center, oklch(0.48 0.10 132 / 55%), oklch(0.08 0.004 132 / 25%), transparent 70%)",
-        }}
-        aria-hidden
-      />
-
-      <div className="marketing-preview-dark relative overflow-hidden rounded-2xl">
-        <div className="flex items-center justify-between gap-2 border-b border-white/10 bg-black/40 px-4 py-3.5">
+      <div className="marketing-receipt-preview relative overflow-hidden rounded-2xl">
+        {/* Window chrome */}
+        <div className="flex items-center justify-between gap-2 border-b border-border/70 bg-parchment/60 px-4 py-3">
           <div className="flex items-center gap-2">
             <div className="flex gap-1.5">
-              <span className="size-2.5 rounded-full bg-[oklch(0.55_0.14_25)]" />
-              <span className="size-2.5 rounded-full bg-[oklch(0.72_0.12_85)]" />
-              <span className="size-2.5 rounded-full bg-[oklch(0.55_0.11_132)]" />
+              <span className="size-2.5 rounded-full bg-[#e8a598]" />
+              <span className="size-2.5 rounded-full bg-[#e8c87a]" />
+              <span className="size-2.5 rounded-full bg-[#a8c898]" />
             </div>
-            <span className="ml-1 font-mono text-[11px] text-white/50">Ask · Acme Payroll</span>
+            <span className="ml-1 font-mono text-[10px] text-muted-foreground">Ask · Acme Payroll</span>
           </div>
-          <span
-            className={cn(
-              "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider transition-colors",
-              scenario.kind === "refusal"
-                ? "bg-white/10 text-white/70"
-                : "bg-primary/20 text-[oklch(0.78_0.1_132)]",
-            )}
-          >
-            {scenario.kind === "refusal" ? "Refusal" : "Receipt"}
-          </span>
+          <span className="font-display text-[11px] tracking-wide text-amber">RECEIPT</span>
         </div>
 
-        <div className="space-y-4 p-5">
+        <div className="space-y-4 bg-receipt p-5">
+          {/* Scenario pills */}
           <div className="flex flex-wrap gap-2">
             {SCENARIOS.map((s) => (
               <button
@@ -185,8 +169,8 @@ export function LiveDemo() {
                 className={cn(
                   "rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-all",
                   scenarioId === s.id
-                    ? "border-primary/50 bg-primary/20 text-[oklch(0.85_0.08_132)]"
-                    : "border-white/10 bg-white/5 text-white/50 hover:border-white/20 hover:text-white/80",
+                    ? "border-amber/50 bg-amber/15 text-ink"
+                    : "border-border bg-parchment/50 text-muted-foreground hover:border-amber/30 hover:text-ink",
                 )}
               >
                 {s.label}
@@ -194,26 +178,25 @@ export function LiveDemo() {
             ))}
           </div>
 
-          <div className="min-h-[3.25rem] rounded-xl border border-white/8 bg-white/5 p-3.5 text-sm text-white/70">
+          {/* Question */}
+          <div className="evidence-tape rounded-lg px-3.5 py-3 text-sm text-ink">
             <Typewriter text={scenario.question} active={typing} />
           </div>
 
+          {/* Answer area */}
           <div
             className={cn(
-              "space-y-3 rounded-xl border p-4 transition-all duration-500",
-              scenario.kind === "refusal"
-                ? "border-white/10 bg-white/5"
-                : "border-primary/25 bg-black/30",
+              "transition-opacity duration-500",
               phase === "thinking" && "opacity-60",
             )}
           >
             {phase === "thinking" ? (
-              <div className="flex items-center gap-2 py-2 text-sm text-white/50">
+              <div className="flex items-center gap-2 py-2 text-sm text-muted-foreground">
                 <span className="flex gap-1">
                   {[0, 1, 2].map((i) => (
                     <span
                       key={i}
-                      className="size-1.5 rounded-full bg-primary animate-pulse"
+                      className="size-1.5 rounded-full bg-amber animate-pulse"
                       style={{ animationDelay: `${i * 150}ms` }}
                     />
                   ))}
@@ -221,59 +204,57 @@ export function LiveDemo() {
                 Searching memory…
               </div>
             ) : scenario.kind === "refusal" ? (
-              <div className="space-y-2">
-                <p className="text-sm font-semibold text-white/90">{scenario.answer}</p>
+              <div className="space-y-2 rounded-lg border border-dashed border-border bg-parchment/50 p-4">
+                <p className="font-display text-base text-ink">{scenario.answer}</p>
                 {scenario.refusalHint ? (
-                  <p className="text-xs leading-relaxed text-white/45">{scenario.refusalHint}</p>
+                  <p className="text-xs leading-relaxed text-muted-foreground">{scenario.refusalHint}</p>
                 ) : null}
               </div>
             ) : (
-              <>
-                <p className="text-sm leading-relaxed text-white/85">{scenario.answer}</p>
-                {scenario.citations.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {scenario.citations.map((c) => (
-                      <button
-                        key={c.id}
-                        type="button"
-                        onClick={() =>
-                          setSelectedCitation((prev) => (prev === c.id ? null : c.id))
-                        }
-                        className={cn(
-                          "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-all",
-                          selectedCitation === c.id
-                            ? "scale-[1.02] border-primary bg-primary/25 text-white shadow-lg shadow-primary/20"
-                            : c.tone === "code"
-                              ? "border-primary/40 bg-primary/15 text-[oklch(0.72_0.11_132)] hover:border-primary/60"
-                              : c.tone === "ticket"
-                                ? "border-white/15 bg-white/8 text-white/75 hover:border-white/25"
-                                : "border-primary/30 bg-primary/10 text-[oklch(0.78_0.1_132)] hover:border-primary/50",
-                        )}
-                      >
-                        <c.icon className="size-3" />
-                        {c.label}
-                      </button>
-                    ))}
+              <AnswerReceipt perforated={false} className="shadow-none border-0">
+                <div className="px-4 py-3">
+                  <div className="flex items-start gap-2">
+                    <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-proof" />
+                    <p className="text-sm leading-relaxed text-ink">{scenario.answer}</p>
                   </div>
+                  {scenario.citations.length > 0 ? (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {scenario.citations.map((c) => (
+                        <CitationChip
+                          key={c.id}
+                          label={c.label}
+                          variant={c.variant}
+                          selected={selectedCitation === c.id}
+                          onClick={() =>
+                            setSelectedCitation((prev) => (prev === c.id ? null : c.id))
+                          }
+                        />
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+                {scenario.citations.length > 0 ? (
+                  <ReceiptFooter className="px-4 py-3">
+                    <p className="section-label text-muted-foreground">Receipts</p>
+                  </ReceiptFooter>
                 ) : null}
-              </>
+              </AnswerReceipt>
             )}
           </div>
 
+          {/* Citation snippet preview */}
           <div
             className={cn(
-              "overflow-hidden rounded-xl border border-primary/20 bg-primary/5 transition-all duration-300",
+              "overflow-hidden rounded-lg border border-amber/20 bg-amber/5 transition-all duration-300",
               activeCitation ? "max-h-24 opacity-100 p-3" : "max-h-0 opacity-0 p-0 border-transparent",
             )}
           >
             {activeCitation ? (
-              <p className="font-mono text-[11px] leading-relaxed text-[oklch(0.78_0.08_132)]">
-                {activeCitation.snippet}
-              </p>
+              <p className="font-mono text-[11px] leading-relaxed text-ink/80">{activeCitation.snippet}</p>
             ) : null}
           </div>
 
-          <p className="text-center text-[10px] font-bold uppercase tracking-[0.24em] text-primary/80">
+          <p className="text-center text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
             {scenario.kind === "refusal" ? "Honest refusal · no guesswork" : "Answer Receipt · click a citation"}
           </p>
         </div>

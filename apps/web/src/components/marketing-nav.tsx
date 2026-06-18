@@ -35,21 +35,14 @@ export function MarketingNav() {
   }, []);
 
   return (
-    <header className="marketing-glass-nav fixed inset-x-0 top-0 z-50">
-      <div className="mx-auto flex h-[5.25rem] max-w-6xl items-center justify-between px-6">
-        <Link href="/" className="group flex items-center gap-4">
-          <span
-            className={cn(
-              "marketing-logo-float marketing-logo-mark flex size-14 items-center justify-center rounded-2xl",
-              "text-[1.65rem] font-bold text-white",
-            )}
-          >
-            B
-          </span>
-          <span className="text-xl font-bold tracking-tight text-white">Backstory</span>
+    <header className="marketing-nav fixed inset-x-0 top-0 z-50">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
+        <Link href="/" className="group flex items-center gap-3">
+          <span className="brand-mark size-9 rounded-lg text-lg">B</span>
+          <span className="font-display text-xl text-foreground">Backstory</span>
         </Link>
 
-        <nav className="hidden items-center gap-9 text-sm font-semibold md:flex">
+        <nav className="hidden items-center gap-9 text-sm md:flex">
           {NAV_LINKS.map((link) => (
             <a
               key={link.href}
@@ -69,8 +62,8 @@ export function MarketingNav() {
           <Link
             href="/sign-in"
             className={cn(
-              buttonVariants({ variant: "ghost", size: "sm" }),
-              "text-white/80 hover:bg-white/10 hover:text-white",
+              buttonVariants({ variant: "outline", size: "sm" }),
+              "border-border bg-transparent text-foreground hover:bg-muted",
             )}
           >
             Log in
@@ -79,7 +72,7 @@ export function MarketingNav() {
             href="/sign-up"
             className={cn(
               buttonVariants({ size: "sm" }),
-              "bg-primary text-primary-foreground shadow-lg shadow-primary/40 hover:bg-primary/90",
+              "bg-ink text-receipt hover:bg-ink/90",
             )}
           >
             Get started
