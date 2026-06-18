@@ -30,13 +30,14 @@ db-revision:
 	cd apps/api && uv run alembic revision --autogenerate -m "$(name)"
 
 dev:
-	pnpm dev
+	@echo "Starting API (8000) + web (3000) — Ctrl+C stops both"
+	@$(MAKE) -j2 dev-api dev-web
 
 dev-web:
-	pnpm dev:web
+	pnpm --filter web dev
 
 dev-api:
-	pnpm dev:api
+	cd apps/api && uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 dev-worker:
 	cd apps/api && uv run celery -A app.worker worker -Q ingest,transcribe -l info
