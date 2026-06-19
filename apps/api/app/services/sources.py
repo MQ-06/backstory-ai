@@ -177,7 +177,11 @@ async def create_source(
 
 
 def enqueue_source_ingest(source_id: uuid.UUID) -> None:
+    from app.config import get_settings
     from app.tasks.ingest import run_source_ingest
+
+    if get_settings().e2e_test_mode:
+        return
 
     try:
         run_source_ingest.delay(str(source_id))

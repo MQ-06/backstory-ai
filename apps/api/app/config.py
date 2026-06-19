@@ -42,6 +42,11 @@ class Settings(BaseSettings):
     langfuse_secret_key: str = ""
     langfuse_host: str = "https://cloud.langfuse.com"
     sentry_dsn: str = ""
+    e2e_test_mode: bool = False
+    r2_account_id: str = ""
+    r2_access_key_id: str = ""
+    r2_secret_access_key: str = ""
+    r2_bucket_name: str = ""
 
     @property
     def database_url_sync(self) -> str:

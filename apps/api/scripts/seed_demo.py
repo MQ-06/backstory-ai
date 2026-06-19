@@ -14,6 +14,12 @@ from __future__ import annotations
 import os
 import sys
 import uuid
+from pathlib import Path
+
+# Allow `python scripts/seed_demo.py` — sys.path[0] is scripts/, not the API root.
+_api_root = Path(__file__).resolve().parents[1]
+if str(_api_root) not in sys.path:
+    sys.path.insert(0, str(_api_root))
 
 from sqlalchemy import select
 
@@ -132,6 +138,7 @@ def _upsert_source(
     external_id: str,
     source_type: str,
     name: str,
+    config: dict | None = None,
 ) -> Source:
     source = db.execute(
         select(Source).where(
@@ -140,6 +147,8 @@ def _upsert_source(
         )
     ).scalar_one_or_none()
     if source:
+        if config is not None:
+            source.config = config
         return source
     source = Source(
         engagement_id=engagement_id,
@@ -147,7 +156,7 @@ def _upsert_source(
         name=name,
         status="queued",
         external_id=external_id,
-        config={},
+        config=config or {},
     )
     db.add(source)
     db.flush()
