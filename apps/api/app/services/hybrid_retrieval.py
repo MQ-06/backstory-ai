@@ -48,13 +48,21 @@ def _chunk_label(chunk: Chunk) -> tuple[str, str, dict | None]:
             if chunk.line_end and chunk.line_end != chunk.line_start:
                 line += f"-{chunk.line_end}"
         label = f"{ce.path}{line}"
-        locator = {
+        locator: dict = {
             "path": ce.path,
             "line_start": chunk.line_start or ce.line_start,
             "line_end": chunk.line_end or ce.line_end,
             "commit_sha": ce.commit_sha,
             "code_entity_id": str(ce.id),
         }
+        source = chunk.source or ce.source
+        if source and source.type == "git":
+            config = source.config or {}
+            repo_url = config.get("repo_url")
+            if repo_url:
+                locator["repo_url"] = repo_url
+            branch = config.get("branch") or config.get("default_branch") or "main"
+            locator["branch"] = branch
         return label, "code", locator
 
     if chunk.artifact_id and chunk.artifact:

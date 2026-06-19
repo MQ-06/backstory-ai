@@ -10,6 +10,7 @@ from app.routers.sources import router as sources_router
 from app.routers.ask import router as ask_router
 from app.routers.briefs import router as briefs_router
 from app.routers.interviews import router as interviews_router
+from app.routers.library import router as library_router
 
 
 @asynccontextmanager
@@ -46,6 +47,7 @@ def create_app() -> FastAPI:
     app.include_router(ask_router, prefix="/api/v1")
     app.include_router(briefs_router, prefix="/api/v1")
     app.include_router(interviews_router, prefix="/api/v1")
+    app.include_router(library_router, prefix="/api/v1")
     return app
 
 

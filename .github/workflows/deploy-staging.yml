@@ -11,6 +11,10 @@ on:
         description: Deploy Celery worker to Fly.io
         type: boolean
         default: true
+      staging_api_url:
+        description: Staging API base URL for post-deploy health check
+        type: string
+        default: https://backstory-api-staging.fly.dev
 
 concurrency:
   group: deploy-staging
@@ -40,3 +44,22 @@ jobs:
         run: fly deploy --config fly.worker.toml --remote-only
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+  validate-staging:
+    needs: [deploy-api]
+    if: inputs.deploy_api
+    runs-on: ubuntu-latest
+    steps:
+      - name: Staging health check
+        run: |
+          url="${{ inputs.staging_api_url }}/health"
+          for i in 1 2 3 4 5; do
+            if curl -fsS "$url" | grep -q '"status":"ok"'; then
+              echo "Staging API healthy: $url"
+              exit 0
+            fi
+            echo "Waiting for staging API (attempt $i)…"
+            sleep 15
+          done
+          echo "Staging health check failed: $url"
+          exit 1

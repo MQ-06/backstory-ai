@@ -1,127 +1,75 @@
 "use client";
 
+import { useAuth } from "@clerk/nextjs";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowUpRight, Search } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
 import { CitationChip } from "@/components/ask/citation-chip";
+import { useEngagement } from "@/components/providers";
 import { WorkspaceHeader } from "@/components/workspace-header";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { fetchLibrary, type LibraryArtifact } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
-type ArtifactKind = "code" | "ticket" | "interview";
-
-type Artifact = {
-  id: string;
-  name: string;
-  kind: ArtifactKind;
-  meta: string;
-  links: { label: string; variant: "code" | "ticket" | "interview" }[];
-  detail: {
-    lastModified: string;
-    authors: string;
-    lines: string;
-    patchCount: string;
-    busFactor: string;
-    totalLinks: number;
-  };
-  horizons: { label: string; density: "high" | "med" | "low" }[];
-};
-
-const DEMO_ARTIFACTS: Artifact[] = [
-  {
-    id: "payroll-calc",
-    name: "payroll_calc.py",
-    kind: "code",
-    meta: "Code · 4,812 chars · 14 links",
-    links: [
-      { label: "JIRA-4821", variant: "ticket" },
-      { label: "Interview @ 04:12", variant: "interview" },
-      { label: "batch_runner.py:89", variant: "code" },
-    ],
-    detail: {
-      lastModified: "2019-03-14",
-      authors: "Ahmed S., Priya K.",
-      lines: "312",
-      patchCount: "14",
-      busFactor: "1",
-      totalLinks: 14,
-    },
-    horizons: [
-      { label: "JIRA-4821", density: "high" },
-      { label: "Interview @ 04:12", density: "med" },
-      { label: "batch_runner.py", density: "high" },
-    ],
-  },
-  {
-    id: "jira-4821",
-    name: "JIRA-4821",
-    kind: "ticket",
-    meta: "Ticket · closed 2019 · 6 links",
-    links: [
-      { label: "payroll_calc.py:142", variant: "code" },
-      { label: "RECON-7", variant: "ticket" },
-    ],
-    detail: {
-      lastModified: "2019-11-02",
-      authors: "Finance UAT",
-      lines: "—",
-      patchCount: "—",
-      busFactor: "—",
-      totalLinks: 6,
-    },
-    horizons: [{ label: "payroll_calc.py:142", density: "high" }],
-  },
-  {
-    id: "interview-ahmed",
-    name: "Interview — Ahmed S.",
-    kind: "interview",
-    meta: "Interview · 42 min · 94 segments",
-    links: [
-      { label: "payroll_calc.py:142", variant: "code" },
-      { label: "@ 04:12", variant: "interview" },
-    ],
-    detail: {
-      lastModified: "2026-03-01",
-      authors: "Ahmed S.",
-      lines: "—",
-      patchCount: "—",
-      busFactor: "—",
-      totalLinks: 8,
-    },
-    horizons: [{ label: "Month-end batch", density: "med" }],
-  },
-];
-
-const FILTERS: { id: "all" | ArtifactKind; label: string; count: number }[] = [
-  { id: "all", label: "All", count: 3314 },
-  { id: "code", label: "Code", count: 2341 },
-  { id: "ticket", label: "Tickets", count: 879 },
-  { id: "interview", label: "Interviews", count: 94 },
-];
-
-const COVERAGE = [
-  { label: "Code", pct: 78, color: "bg-amber" },
-  { label: "Tickets", pct: 62, color: "bg-blue-400" },
-  { label: "Interviews", pct: 34, color: "bg-proof" },
-  { label: "Docs", pct: 41, color: "bg-muted-foreground/40" },
-];
+type ArtifactKind = LibraryArtifact["kind"] | "all";
 
 export function LibraryPageClient() {
+  const { getToken } = useAuth();
+  const { activeEngagement } = useEngagement();
+  const engagementId = activeEngagement?.id;
+
   const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState<"all" | ArtifactKind>("all");
-  const [selectedId, setSelectedId] = useState(DEMO_ARTIFACTS[0].id);
+  const [filter, setFilter] = useState<ArtifactKind>("all");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const filtered = useMemo(() => {
-    return DEMO_ARTIFACTS.filter((a) => {
-      if (filter !== "all" && a.kind !== filter) return false;
-      if (!query.trim()) return true;
-      return a.name.toLowerCase().includes(query.toLowerCase());
-    });
-  }, [filter, query]);
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["library", engagementId, filter, query],
+    enabled: Boolean(engagementId),
+    queryFn: async () => {
+      const token = await getToken();
+      if (!token || !engagementId) return { artifacts: [], summary: { total: 0, code: 0, ticket: 0, interview: 0, doc: 0 } };
+      return fetchLibrary(token, engagementId, {
+        kind: filter === "all" ? undefined : filter,
+        q: query.trim() || undefined,
+      });
+    },
+  });
 
-  const selected = DEMO_ARTIFACTS.find((a) => a.id === selectedId) ?? DEMO_ARTIFACTS[0];
+  const artifacts = data?.artifacts ?? [];
+  const summary = data?.summary;
+
+  const filters = useMemo(
+    () =>
+      [
+        { id: "all" as const, label: "All", count: summary?.total ?? 0 },
+        { id: "code" as const, label: "Code", count: summary?.code ?? 0 },
+        { id: "ticket" as const, label: "Tickets", count: summary?.ticket ?? 0 },
+        { id: "interview" as const, label: "Interviews", count: summary?.interview ?? 0 },
+        { id: "doc" as const, label: "Docs", count: summary?.doc ?? 0 },
+      ].filter((f) => f.id === "all" || f.count > 0 || filter === f.id),
+    [summary, filter],
+  );
+
+  const selected =
+    artifacts.find((a) => a.id === selectedId) ?? artifacts[0] ?? null;
+
+  const askHref = selected
+    ? `/ask?q=${encodeURIComponent(`What should I know about ${selected.name}?`)}`
+    : "/ask";
+
+  const coverage = summary
+    ? [
+        { label: "Code", count: summary.code, color: "bg-amber" },
+        { label: "Tickets", count: summary.ticket, color: "bg-blue-400" },
+        { label: "Interviews", count: summary.interview, color: "bg-proof" },
+        { label: "Docs", count: summary.doc, color: "bg-muted-foreground/40" },
+      ]
+    : [];
+
+  const maxCoverage = Math.max(summary?.total ?? 1, 1);
 
   return (
     <div>
@@ -131,150 +79,149 @@ export function LibraryPageClient() {
         description="Browse indexed artifacts — code, tickets, interviews, and documents linked across horizons."
       />
 
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="relative flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            className="bg-receipt pl-9"
-            placeholder="Search artifacts…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded border border-border bg-parchment px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
-            ⌘K
-          </span>
+      {!engagementId ? (
+        <div className="rounded-xl border border-dashed border-amber/35 bg-amber/5 px-4 py-3 text-sm text-muted-foreground">
+          Select an engagement to browse indexed artifacts.
         </div>
-        <div className="flex flex-wrap gap-2">
-          {FILTERS.map((f) => (
-            <button
-              key={f.id}
-              type="button"
-              onClick={() => setFilter(f.id)}
-              className={cn(
-                "rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
-                filter === f.id
-                  ? "border-ink bg-ink text-receipt"
-                  : "border-border bg-receipt text-muted-foreground hover:border-amber/30",
-              )}
-            >
-              {f.label} ({f.count.toLocaleString()})
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
-        <section className="min-w-0">
-          <p className="section-label mb-3 text-muted-foreground">Artifacts</p>
-          <div className="overflow-hidden rounded-xl border border-border/80 bg-receipt shadow-soft">
-            {filtered.map((artifact) => {
-              const active = artifact.id === selectedId;
-              return (
+      ) : (
+        <>
+          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                className="bg-receipt pl-9"
+                placeholder="Search artifacts…"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {filters.map((f) => (
                 <button
-                  key={artifact.id}
+                  key={f.id}
                   type="button"
-                  onClick={() => setSelectedId(artifact.id)}
+                  onClick={() => setFilter(f.id)}
                   className={cn(
-                    "relative flex w-full flex-col gap-2 border-b border-border/60 px-4 py-4 text-left transition-colors last:border-b-0",
-                    active ? "bg-amber/6" : "hover:bg-parchment/50",
+                    "rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
+                    filter === f.id
+                      ? "border-ink bg-ink text-receipt"
+                      : "border-border bg-receipt text-muted-foreground hover:border-amber/30",
                   )}
                 >
-                  {active ? (
-                    <span className="absolute inset-y-0 left-0 w-1 bg-amber" aria-hidden />
-                  ) : null}
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-medium text-ink">{artifact.name}</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">{artifact.meta}</p>
+                  {f.label} ({f.count.toLocaleString()})
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {isLoading ? (
+            <p className="text-sm text-muted-foreground">Loading library…</p>
+          ) : error ? (
+            <p className="text-sm text-destructive">Could not load library.</p>
+          ) : artifacts.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-border bg-parchment/50 p-8 text-center text-sm text-muted-foreground">
+              No artifacts indexed yet — connect sources from the Sources page, then return here.
+            </div>
+          ) : (
+            <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
+              <section className="min-w-0">
+                <p className="section-label mb-3 text-muted-foreground">Artifacts</p>
+                <div className="overflow-hidden rounded-xl border border-border/80 bg-receipt shadow-soft">
+                  {artifacts.map((artifact) => {
+                    const active = artifact.id === (selected?.id ?? selectedId);
+                    return (
+                      <button
+                        key={artifact.id}
+                        type="button"
+                        onClick={() => setSelectedId(artifact.id)}
+                        className={cn(
+                          "relative flex w-full flex-col gap-2 border-b border-border/60 px-4 py-4 text-left transition-colors last:border-b-0",
+                          active ? "bg-amber/6" : "hover:bg-parchment/50",
+                        )}
+                      >
+                        {active ? (
+                          <span className="absolute inset-y-0 left-0 w-1 bg-amber" aria-hidden />
+                        ) : null}
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="font-medium text-ink">{artifact.name}</p>
+                            <p className="mt-0.5 text-xs text-muted-foreground">{artifact.meta}</p>
+                          </div>
+                        </div>
+                        {artifact.links.length > 0 ? (
+                          <div className="flex flex-wrap gap-1.5">
+                            {artifact.links.map((link) => (
+                              <CitationChip
+                                key={link.label}
+                                label={link.label}
+                                variant={link.variant === "doc" ? "code" : link.variant}
+                                as="span"
+                              />
+                            ))}
+                          </div>
+                        ) : null}
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+
+              <aside className="space-y-4">
+                {selected ? (
+                  <div className="rounded-xl border border-border/80 bg-receipt p-4 shadow-soft">
+                    <p className="font-mono text-sm font-semibold text-ink">{selected.name}</p>
+                    <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-xs">
+                      {(
+                        [
+                          ["Last modified", selected.last_modified ?? "—"],
+                          ["Authors", selected.authors ?? "—"],
+                          ["Chunks", String(selected.chunk_count)],
+                          ["Links", String(selected.link_count)],
+                          ["Kind", selected.kind],
+                        ] as const
+                      ).map(([label, value]) => (
+                        <div key={label}>
+                          <dt className="text-muted-foreground">{label}</dt>
+                          <dd className="mt-0.5 font-medium text-ink">{value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                    <Link
+                      href={askHref}
+                      className={cn(buttonVariants(), "mt-5 w-full bg-ink text-receipt hover:bg-ink/90")}
+                    >
+                      Ask about this file
+                      <ArrowUpRight className="size-4" />
+                    </Link>
+                  </div>
+                ) : null}
+
+                {coverage.length > 0 ? (
+                  <div className="rounded-xl border border-border/80 bg-receipt p-4 shadow-soft">
+                    <p className="section-label mb-4 text-muted-foreground">Coverage by type</p>
+                    <div className="space-y-3">
+                      {coverage.map((row) => (
+                        <div key={row.label}>
+                          <div className="mb-1 flex justify-between text-xs">
+                            <span className="text-muted-foreground">{row.label}</span>
+                            <span className="font-mono font-medium text-ink">{row.count}</span>
+                          </div>
+                          <div className="h-1.5 overflow-hidden rounded-full bg-border">
+                            <div
+                              className={cn("h-full rounded-full transition-all", row.color)}
+                              style={{ width: `${Math.round((row.count / maxCoverage) * 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {artifact.links.map((link) => (
-                      <CitationChip key={link.label} label={link.label} variant={link.variant} as="span" />
-                    ))}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-          <p className="mt-3 text-xs text-muted-foreground">
-            Demo data — full library populates after source ingestion.
-          </p>
-        </section>
-
-        <aside className="space-y-4">
-          <div className="rounded-xl border border-border/80 bg-receipt p-4 shadow-soft">
-            <p className="font-mono text-sm font-semibold text-ink">{selected.name}</p>
-            <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-xs">
-              {(
-                [
-                  ["Last modified", selected.detail.lastModified],
-                  ["Authors", selected.detail.authors],
-                  ["Lines", selected.detail.lines],
-                  ["Patch count", selected.detail.patchCount],
-                  ["Bus factor", selected.detail.busFactor],
-                  ["Total links", String(selected.detail.totalLinks)],
-                ] as const
-              ).map(([label, value]) => (
-                <div key={label}>
-                  <dt className="text-muted-foreground">{label}</dt>
-                  <dd className="mt-0.5 font-medium text-ink">{value}</dd>
-                </div>
-              ))}
-            </dl>
-            <div className="mt-5 border-t border-dashed border-border/70 pt-4">
-              <p className="section-label mb-2 text-muted-foreground">Linked across horizons</p>
-              <div className="space-y-2">
-                {selected.horizons.map((h) => (
-                  <div
-                    key={h.label}
-                    className="flex items-center justify-between rounded-lg border border-border/60 px-2.5 py-2 text-xs"
-                  >
-                    <span className="truncate font-mono">{h.label}</span>
-                    <span
-                      className={cn(
-                        "rounded px-1.5 py-0.5 text-[9px] font-bold uppercase",
-                        h.density === "high" && "bg-proof/12 text-proof",
-                        h.density === "med" && "bg-amber/12 text-amber",
-                        h.density === "low" && "bg-muted text-muted-foreground",
-                      )}
-                    >
-                      {h.density}
-                    </span>
-                  </div>
-                ))}
-              </div>
+                ) : null}
+              </aside>
             </div>
-            <Link
-              href="/ask"
-              className={cn(buttonVariants(), "mt-5 w-full bg-ink text-receipt hover:bg-ink/90")}
-            >
-              Ask about this file
-              <ArrowUpRight className="size-4" />
-            </Link>
-          </div>
-
-          <div className="rounded-xl border border-border/80 bg-receipt p-4 shadow-soft">
-            <p className="section-label mb-4 text-muted-foreground">Coverage by horizon</p>
-            <div className="space-y-3">
-              {COVERAGE.map((row) => (
-                <div key={row.label}>
-                  <div className="mb-1 flex justify-between text-xs">
-                    <span className="text-muted-foreground">{row.label}</span>
-                    <span className="font-mono font-medium text-ink">{row.pct}%</span>
-                  </div>
-                  <div className="h-1.5 overflow-hidden rounded-full bg-border">
-                    <div
-                      className={cn("h-full rounded-full transition-all", row.color)}
-                      style={{ width: `${row.pct}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </aside>
-      </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

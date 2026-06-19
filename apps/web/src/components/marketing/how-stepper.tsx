@@ -9,7 +9,7 @@ const STEPS = [
     step: "01",
     title: "Connect sources",
     text: "Git, tickets, docs — indexed per engagement. One tenant boundary, zero cross-leakage.",
-    detail: "OAuth to GitHub · Jira · upload runbooks. Each source shows ingest status in real time.",
+    detail: "OAuth to GitHub · upload runbooks. Each source shows ingest status in real time.",
   },
   {
     step: "02",

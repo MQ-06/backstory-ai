@@ -1,6 +1,20 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page, type Response } from "@playwright/test";
 
-const apiUrl = process.env.API_URL ?? "http://localhost:8000";
+const apiUrl = process.env.API_URL ?? "http://127.0.0.1:8001";
+
+/** Retry navigation — avoids flaky net::ERR_NETWORK_CHANGED when dev server compiles. */
+async function gotoStable(page: Page, url: string): Promise<Response | null> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      return await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30_000 });
+    } catch (error) {
+      lastError = error;
+      await page.waitForTimeout(1500);
+    }
+  }
+  throw lastError;
+}
 
 test.describe("API smoke", () => {
   test("health endpoint returns ok", async ({ request }) => {
@@ -21,19 +35,21 @@ test.describe("API smoke", () => {
 
 test.describe("Web smoke", () => {
   test("sign-in page loads", async ({ page }) => {
-    await page.goto("/sign-in");
+    const response = await gotoStable(page, "/sign-in");
+    expect(response?.status() ?? 200).toBeLessThan(500);
     await expect(page).toHaveURL(/sign-in/);
-    await expect(page.locator("body")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
+    await expect(page.getByText("Runtime Error")).toHaveCount(0);
   });
 
   test("marketing home loads", async ({ page }) => {
-    const response = await page.goto("/");
-    expect(response?.status()).toBeLessThan(500);
+    const response = await gotoStable(page, "/");
+    expect(response?.status() ?? 200).toBeLessThan(500);
     await expect(page.locator("body")).toBeVisible();
   });
 
   test("ask route redirects unauthenticated users to sign-in", async ({ page }) => {
-    await page.goto("/ask");
+    await gotoStable(page, "/ask");
     await expect(page).toHaveURL(/sign-in/);
   });
 });

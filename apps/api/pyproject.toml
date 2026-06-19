@@ -22,6 +22,7 @@ dependencies = [
     "pgvector>=0.3.6",
     "fastembed>=0.6.0",
     "langfuse>=2.60.0",
+    "boto3>=1.35.0",
 ]
 
 [dependency-groups]
@@ -39,3 +40,6 @@ testpaths = ["tests"]
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+
+[tool.ruff.lint.per-file-ignores]
+"scripts/*" = ["E402"]

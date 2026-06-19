@@ -19,6 +19,31 @@ from app.models import Interview, Source
 
 
 @pytest.mark.asyncio
+async def test_library_tenant_isolation(
+    requires_postgres,
+    test_engagement: Engagement,
+    other_org: Org,
+):
+    async def _other_org_auth() -> AuthContext:
+        return AuthContext(
+            clerk_user_id="user_other",
+            clerk_org_id=other_org.clerk_org_id,
+            org=other_org,
+        )
+
+    app.dependency_overrides[require_org] = _other_org_auth
+    try:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.get(
+                f"/api/v1/engagements/{test_engagement.id}/library",
+                headers={"Authorization": "Bearer test-token"},
+            )
+        assert response.status_code == 404
+    finally:
+        app.dependency_overrides.clear()
+
+
+@pytest.mark.asyncio
 async def test_briefs_tenant_isolation(
     requires_postgres,
     test_engagement: Engagement,

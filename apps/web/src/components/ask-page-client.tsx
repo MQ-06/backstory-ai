@@ -2,7 +2,8 @@
 
 import { useAuth } from "@clerk/nextjs";
 import { Loader2, Send } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 import { AnswerReceipt, ReceiptFooter } from "@/components/ask/answer-receipt";
 import { CitationChipRow } from "@/components/ask/citation-chip";
@@ -28,6 +29,7 @@ function citationKey(citation: AskCitation, index: number) {
 export function AskPageClient() {
   const { getToken } = useAuth();
   const { activeEngagement } = useEngagement();
+  const searchParams = useSearchParams();
   const [question, setQuestion] = useState("");
   const [askedQuestion, setAskedQuestion] = useState("");
   const [status, setStatus] = useState<string | null>(null);
@@ -40,6 +42,11 @@ export function AskPageClient() {
   const abortRef = useRef<AbortController | null>(null);
 
   const engagementId = activeEngagement?.id;
+
+  useEffect(() => {
+    const q = searchParams.get("q");
+    if (q) setQuestion(q);
+  }, [searchParams]);
 
   const resetAnswer = () => {
     setStatus(null);

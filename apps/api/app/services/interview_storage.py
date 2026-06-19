@@ -1,8 +1,9 @@
-"""Local media storage for interview recordings."""
+"""Interview media storage — local disk or R2."""
 
 from pathlib import Path
 
 from app.config import get_settings
+from app.services.storage import get_storage_backend
 
 
 def interview_media_dir(engagement_id: str, interview_id: str) -> Path:
@@ -18,10 +19,7 @@ def save_interview_media(
     filename: str,
     data: bytes,
 ) -> tuple[str, str]:
-    dest_dir = interview_media_dir(engagement_id, interview_id)
     safe_name = Path(filename).name or "recording.webm"
-    dest = dest_dir / safe_name
-    dest.write_bytes(data)
     mime = "video/webm"
     lower = safe_name.lower()
     if lower.endswith(".mp4"):
@@ -32,8 +30,11 @@ def save_interview_media(
         mime = "audio/wav"
     elif lower.endswith(".m4a"):
         mime = "audio/mp4"
-    return str(dest), mime
+
+    key = f"interviews/{engagement_id}/{interview_id}/{safe_name}"
+    stored = get_storage_backend().save_bytes(key, data, content_type=mime)
+    return stored, mime
 
 
 def resolve_media_path(stored_path: str) -> Path:
-    return Path(stored_path)
+    return get_storage_backend().resolve_path(stored_path)

@@ -3,7 +3,7 @@
 import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Mic, ScrollText } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { ArchaeologyBriefPanel } from "@/components/capture/archaeology-brief-panel";
 import { InterviewStudioPanel } from "@/components/capture/interview-studio-panel";
@@ -37,8 +37,12 @@ export function InterviewsPageClient() {
   const [consented, setConsented] = useState(false);
   const [studioError, setStudioError] = useState<string | null>(null);
   const [recording, setRecording] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const [previewStream, setPreviewStream] = useState<MediaStream | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const previewStreamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const engagementId = activeEngagement?.id;
 
@@ -121,6 +125,19 @@ export function InterviewsPageClient() {
       setStudioError(formatErrorMessage(err, "Could not record consent")),
   });
 
+  const stopPreviewStream = useCallback(() => {
+    previewStreamRef.current?.getTracks().forEach((t) => t.stop());
+    previewStreamRef.current = null;
+    setPreviewStream(null);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      stopPreviewStream();
+      if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+    };
+  }, [stopPreviewStream]);
+
   const uploadBlob = useCallback(
     async (blob: Blob, filename: string) => {
       const token = await getToken();
@@ -144,19 +161,29 @@ export function InterviewsPageClient() {
     setStudioError(null);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+      previewStreamRef.current = stream;
+      setPreviewStream(stream);
       const recorder = new MediaRecorder(stream);
       chunksRef.current = [];
       recorder.ondataavailable = (e) => {
         if (e.data.size > 0) chunksRef.current.push(e.data);
       };
       recorder.onstop = () => {
-        stream.getTracks().forEach((t) => t.stop());
+        stopPreviewStream();
+        if (recordingTimerRef.current) {
+          clearInterval(recordingTimerRef.current);
+          recordingTimerRef.current = null;
+        }
         const blob = new Blob(chunksRef.current, { type: "video/webm" });
         void uploadBlob(blob, "recording.webm");
       };
       mediaRecorderRef.current = recorder;
       recorder.start();
       setRecording(true);
+      setRecordingSeconds(0);
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingSeconds((s) => s + 1);
+      }, 1000);
     } catch (err) {
       setStudioError(formatErrorMessage(err, "Could not access camera/microphone"));
     }
@@ -235,6 +262,7 @@ export function InterviewsPageClient() {
           {tab === "brief" ? (
             <ArchaeologyBriefPanel
               brief={latestBrief}
+              interviews={interviews}
               expertName={expertName}
               modulePath={modulePath}
               onExpertNameChange={setExpertName}
@@ -252,6 +280,8 @@ export function InterviewsPageClient() {
               interviews={interviews}
               consented={consented}
               recording={recording}
+              recordingSeconds={recordingSeconds}
+              previewStream={previewStream}
               error={studioError}
               onSelectInterview={setActiveInterview}
               onConsent={() => consentMutation.mutate()}
