@@ -1,83 +1,39 @@
 "use client";
 
 import { Download, Loader2, RefreshCw } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { BriefQuestionCard } from "@/components/capture/brief-question-card";
-import { ExpertSidebar, type ExpertProfile, type ModuleHeat } from "@/components/capture/expert-sidebar";
+import {
+  codeContextFromEvidence,
+  deriveExperts,
+  deriveModuleHeat,
+  deriveSidebarSignals,
+  evidenceChipsFromRecord,
+  parseBriefSignals,
+} from "@/components/capture/brief-sidebar-data";
+import { ExpertSidebar } from "@/components/capture/expert-sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import type { ArchaeologyBrief } from "@/lib/api";
+import type { ArchaeologyBrief, Interview } from "@/lib/api";
+import { downloadBriefMarkdown } from "@/lib/brief-export";
+import { displayBriefQuestionText } from "@/lib/brief-question-text";
 import { cn } from "@/lib/utils";
 
-const DEMO_EXPERTS: ExpertProfile[] = [
-  {
-    id: "ahmed",
-    name: "Ahmed S.",
-    initials: "AS",
-    role: "Sr. Engineer — retiring in 42 days",
-    risk: "high",
-    daysRemaining: 42,
-  },
-  {
-    id: "priya",
-    name: "Priya K.",
-    initials: "PK",
-    role: "Tech Lead — 18 months tenure",
-    risk: "med",
-  },
-  {
-    id: "james",
-    name: "James M.",
-    initials: "JM",
-    role: "Batch ops — stable handoff",
-    risk: "low",
-  },
-];
-
-const DEMO_SIGNALS = [
-  { label: "14× RECON-7 patches (2009–24)", tone: "high" as const },
-  { label: "6 after-hours commits", tone: "med" as const },
-  { label: "bus-factor 1 on payroll_calc", tone: "high" as const },
-  { label: "3 open tickets, no owner", tone: "med" as const },
-];
-
-const DEMO_MODULES: ModuleHeat[] = [
-  { path: "payroll_calc.py", risk: "high" },
-  { path: "batch_runner.py", risk: "high" },
-  { path: "ledger_sync.py", risk: "med" },
-  { path: "config/payroll.yml", risk: "low" },
-  { path: "utils/dates.py", risk: "none" },
-];
-
 function evidenceFromRecord(evidence: Record<string, unknown> | null) {
-  if (!evidence) return { chips: [], note: undefined as string | undefined };
-  const chips: { label: string; variant: "code" | "ticket" | "interview" }[] = [];
-  const label = evidence.label as string | undefined;
-  const path = evidence.path as string | undefined;
-  const signalType = evidence.signal_type as string | undefined;
-
-  if (label) {
-    chips.push({
-      label,
-      variant: signalType === "ticket" ? "ticket" : signalType === "interview" ? "interview" : "code",
-    });
-  } else if (path) {
-    chips.push({ label: path, variant: "code" });
-  }
-
+  const chips = evidenceChipsFromRecord(evidence);
   const note =
-    typeof evidence.context === "string"
+    typeof evidence?.context === "string"
       ? evidence.context
-      : signalType
-        ? `Signal type: ${signalType} — expert context may not exist in tickets or commits.`
+      : evidence?.signal_type
+        ? `Signal type: ${String(evidence.signal_type)} — expert context may not exist in tickets or commits.`
         : undefined;
-
   return { chips, note };
 }
 
 type ArchaeologyBriefPanelProps = {
   brief: ArchaeologyBrief | null;
+  interviews: Interview[];
   expertName: string;
   modulePath: string;
   onExpertNameChange: (v: string) => void;
@@ -91,6 +47,7 @@ type ArchaeologyBriefPanelProps = {
 
 export function ArchaeologyBriefPanel({
   brief,
+  interviews,
   expertName,
   modulePath,
   onExpertNameChange,
@@ -101,21 +58,43 @@ export function ArchaeologyBriefPanel({
   isStartingInterview,
   error,
 }: ArchaeologyBriefPanelProps) {
-  const [selectedExpertId, setSelectedExpertId] = useState("ahmed");
+  const signals = useMemo(() => parseBriefSignals(brief), [brief]);
+  const experts = useMemo(
+    () => deriveExperts(brief, signals, interviews),
+    [brief, signals, interviews],
+  );
+  const sidebarSignals = useMemo(() => deriveSidebarSignals(signals), [signals]);
+  const moduleHeat = useMemo(
+    () => deriveModuleHeat(signals, brief?.module_path ?? modulePath),
+    [signals, brief?.module_path, modulePath],
+  );
+
+  const [selectedExpertId, setSelectedExpertId] = useState<string | null>(null);
   const [expandedRank, setExpandedRank] = useState<number | null>(1);
 
-  const selectedExpert = DEMO_EXPERTS.find((e) => e.id === selectedExpertId) ?? DEMO_EXPERTS[0];
-  const displayExpert = brief?.expert_name || expertName || selectedExpert.name;
-  const displayModule = brief?.module_path || modulePath || "payroll_calc.py + batch_runner.py";
+  useEffect(() => {
+    if (experts.length === 0) {
+      setSelectedExpertId(null);
+      return;
+    }
+    if (!selectedExpertId || !experts.some((e) => e.id === selectedExpertId)) {
+      setSelectedExpertId(experts[0].id);
+    }
+  }, [experts, selectedExpertId]);
+
+  const selectedExpert = experts.find((e) => e.id === selectedExpertId) ?? experts[0];
+  const displayExpert = brief?.expert_name || expertName || selectedExpert?.name || "Expert";
+  const displayModule =
+    brief?.module_path || modulePath || moduleHeat[0]?.path || "All indexed modules";
 
   return (
     <div className="grid gap-8 xl:grid-cols-[17rem_minmax(0,1fr)]">
       <ExpertSidebar
-        experts={DEMO_EXPERTS}
+        experts={experts}
         selectedExpertId={selectedExpertId}
         onSelectExpert={setSelectedExpertId}
-        moduleHeat={DEMO_MODULES}
-        signals={DEMO_SIGNALS}
+        moduleHeat={moduleHeat}
+        signals={sidebarSignals}
       />
 
       <div className="min-w-0 space-y-6">
@@ -131,7 +110,15 @@ export function ArchaeologyBriefPanel({
             </p>
           </div>
           <div className="flex shrink-0 gap-2">
-            <Button variant="outline" size="sm" disabled={!brief}>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!brief || brief.questions.length === 0}
+              onClick={() => {
+                if (!brief) return;
+                downloadBriefMarkdown(brief, displayExpert, displayModule);
+              }}
+            >
               <Download className="size-3.5" />
               Export
             </Button>
@@ -194,7 +181,7 @@ export function ArchaeologyBriefPanel({
                 <BriefQuestionCard
                   key={q.id}
                   rank={q.rank}
-                  text={q.question_text}
+                  text={displayBriefQuestionText(q.question_text)}
                   expanded={expanded}
                   onToggle={() => setExpandedRank(expanded ? null : q.rank)}
                   evidenceChips={chips}
@@ -215,9 +202,12 @@ export function ArchaeologyBriefPanel({
 
         {brief?.status === "ready" && brief.questions.length > 0 ? (
           <div className="flex flex-wrap justify-end gap-3 border-t border-border/70 pt-5">
-            <Button variant="outline" disabled>
+            <Button
+              variant="outline"
+              onClick={() => downloadBriefMarkdown(brief, displayExpert, displayModule)}
+            >
               <Download className="size-4" />
-              Download PDF
+              Export markdown
             </Button>
             <Button
               className={cn("bg-ink text-receipt hover:bg-ink/90")}
@@ -235,3 +225,6 @@ export function ArchaeologyBriefPanel({
     </div>
   );
 }
+
+// Re-export for interview studio code context panel
+export { codeContextFromEvidence };

@@ -437,3 +437,73 @@ export async function getInterviewMediaBlobUrl(
   return URL.createObjectURL(blob);
 }
 
+export type LibraryLink = {
+  label: string;
+  variant: "code" | "ticket" | "interview" | "doc";
+};
+
+export type LibraryArtifact = {
+  id: string;
+  name: string;
+  kind: "code" | "ticket" | "interview" | "doc";
+  meta: string;
+  chunk_count: number;
+  link_count: number;
+  last_modified: string | null;
+  authors: string | null;
+  lines: string | null;
+  links: LibraryLink[];
+};
+
+export type LibrarySummary = {
+  total: number;
+  code: number;
+  ticket: number;
+  interview: number;
+  doc: number;
+};
+
+export type LibraryResponse = {
+  artifacts: LibraryArtifact[];
+  summary: LibrarySummary;
+};
+
+export async function fetchLibrary(
+  token: string,
+  engagementId: string,
+  params?: { kind?: string; q?: string },
+): Promise<LibraryResponse> {
+  const search = new URLSearchParams();
+  if (params?.kind) search.set("kind", params.kind);
+  if (params?.q) search.set("q", params.q);
+  const qs = search.toString();
+  return apiFetch<LibraryResponse>(
+    `/api/v1/engagements/${engagementId}/library${qs ? `?${qs}` : ""}`,
+    token,
+  );
+}
+
+export type EngagementStats = {
+  source_count: number;
+  indexed_source_count: number;
+  last_indexed_at: string | null;
+};
+
+export async function fetchEngagementStats(
+  token: string,
+  engagementId: string,
+): Promise<EngagementStats> {
+  const sources = await fetchSources(token, engagementId);
+  const indexed = sources.filter((s) => s.status === "indexed");
+  const dates = indexed
+    .map((s) => s.updated_at)
+    .filter(Boolean)
+    .sort()
+    .reverse();
+  return {
+    source_count: sources.length,
+    indexed_source_count: indexed.length,
+    last_indexed_at: dates[0] ?? null,
+  };
+}
+

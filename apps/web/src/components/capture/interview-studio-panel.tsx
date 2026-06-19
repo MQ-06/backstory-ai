@@ -9,16 +9,14 @@ import {
   Square,
   Upload,
 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { CitationChip } from "@/components/ask/citation-chip";
+import { codeContextFromEvidence, evidenceChipsFromRecord } from "@/components/capture/brief-sidebar-data";
+import { displayBriefQuestionText } from "@/lib/brief-question-text";
 import { Button } from "@/components/ui/button";
 import type { ArchaeologyBrief, Interview, TranscriptSegment } from "@/lib/api";
 import { cn } from "@/lib/utils";
-
-const DEMO_CODE = `# payroll_calc.py · line 142
-BATCH_DAYS = 30  # days=30 assumption — DO NOT CHANGE
-# RECON-7: see 2009 incident — Ahmed patched manually`;
 
 type InterviewStudioPanelProps = {
   brief: ArchaeologyBrief | null;
@@ -26,6 +24,8 @@ type InterviewStudioPanelProps = {
   interviews: Interview[];
   consented: boolean;
   recording: boolean;
+  recordingSeconds: number;
+  previewStream: MediaStream | null;
   error: string | null;
   onSelectInterview: (interview: Interview) => void;
   onConsent: () => void;
@@ -42,12 +42,20 @@ function formatTimestamp(seconds: number) {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
+function formatDuration(seconds: number) {
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
 export function InterviewStudioPanel({
   brief,
   activeInterview,
   interviews,
   consented,
   recording,
+  recordingSeconds,
+  previewStream,
   error,
   onSelectInterview,
   onConsent,
@@ -58,6 +66,7 @@ export function InterviewStudioPanel({
   consentPending,
 }: InterviewStudioPanelProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [linkedSegments, setLinkedSegments] = useState<Set<string>>(new Set());
 
@@ -66,6 +75,24 @@ export function InterviewStudioPanel({
   const expertName = brief?.expert_name ?? activeInterview?.expert_name ?? "Expert";
   const segments: TranscriptSegment[] = activeInterview?.segments ?? [];
   const answeredCount = Math.min(questionIndex + 1, questions.length);
+  const questionChips = evidenceChipsFromRecord(currentQuestion?.evidence ?? null);
+  const codeContext = codeContextFromEvidence(currentQuestion?.evidence ?? null);
+
+  const displaySeconds =
+    recording || recordingSeconds > 0
+      ? recordingSeconds
+      : activeInterview?.duration_seconds ?? 0;
+
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el) return;
+    if (previewStream) {
+      el.srcObject = previewStream;
+      void el.play().catch(() => {});
+    } else {
+      el.srcObject = null;
+    }
+  }, [previewStream]);
 
   const toggleLink = (segmentId: string) => {
     setLinkedSegments((prev) => {
@@ -91,26 +118,42 @@ export function InterviewStudioPanel({
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
-        {/* Left column */}
         <div className="space-y-4">
           <div className="rounded-xl border border-border/80 bg-receipt shadow-soft">
             <div className="flex items-center justify-between border-b border-border/60 px-4 py-2.5">
               <p className="section-label text-muted-foreground">Recording</p>
               <p className="font-mono text-xs text-muted-foreground">
-                {expertName} · {brief?.module_path ?? "payroll_calc.py"}
+                {expertName} · {brief?.module_path ?? "indexed modules"}
               </p>
             </div>
             <div className="relative aspect-video bg-archive-deep">
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-archive-deep-foreground/80">
-                <span className="mb-3 flex items-center gap-2 font-mono text-sm">
-                  <span className={cn("size-2 rounded-full", recording ? "animate-pulse bg-red-500" : "bg-archive-deep-foreground/40")} />
-                  {recording ? "REC" : "●"} 06:18
-                </span>
-                <span className="flex size-16 items-center justify-center rounded-full bg-archive-deep-foreground/10 text-2xl font-bold">
-                  {expertName.charAt(0)}
-                </span>
-                <p className="mt-3 text-sm font-medium">{expertName}</p>
-                <p className="text-xs text-archive-deep-foreground/60">Sr. Engineer — 22 years on system</p>
+              {previewStream ? (
+                <video
+                  ref={videoRef}
+                  className="size-full object-cover"
+                  muted
+                  playsInline
+                  autoPlay
+                />
+              ) : (
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-archive-deep-foreground/80">
+                  <span className="flex size-16 items-center justify-center rounded-full bg-archive-deep-foreground/10 text-2xl font-bold">
+                    {expertName.charAt(0)}
+                  </span>
+                  <p className="mt-3 text-sm font-medium">{expertName}</p>
+                  <p className="text-xs text-archive-deep-foreground/60">
+                    {activeInterview ? "Ready to record" : "Start an interview from the brief tab"}
+                  </p>
+                </div>
+              )}
+              <div className="absolute left-3 top-3 flex items-center gap-2 rounded-full bg-black/50 px-2.5 py-1 font-mono text-xs text-white">
+                <span
+                  className={cn(
+                    "size-2 rounded-full",
+                    recording ? "animate-pulse bg-red-500" : "bg-white/50",
+                  )}
+                />
+                {recording ? "REC" : "●"} {formatDuration(displaySeconds)}
               </div>
             </div>
             {consented ? (
@@ -124,7 +167,7 @@ export function InterviewStudioPanel({
             )}
             <div className="space-y-3 p-4">
               <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>Live · 48kHz</span>
+                <span>{recording ? "Live capture" : previewStream ? "Preview active" : "Idle"}</span>
                 <span className="font-mono">{activeInterview?.status ?? "idle"}</span>
               </div>
               <div className="flex h-8 items-end gap-0.5">
@@ -192,18 +235,30 @@ export function InterviewStudioPanel({
               <span className="text-[10px] text-muted-foreground">Current question</span>
             </div>
             <div className="bg-archive-deep p-4">
-              <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-archive-deep-foreground/50">
-                Referenced in this question
-              </p>
-              <p className="mb-3 font-mono text-xs text-amber">payroll_calc.py · line 142</p>
-              <pre className="overflow-x-auto font-mono text-xs leading-relaxed text-archive-deep-foreground/90">
-                {DEMO_CODE}
-              </pre>
+              {codeContext ? (
+                <>
+                  <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-archive-deep-foreground/50">
+                    Referenced in this question
+                  </p>
+                  <p className="mb-3 font-mono text-xs text-amber">
+                    {codeContext.path}
+                    {codeContext.lineStart ? ` · line ${codeContext.lineStart}` : ""}
+                  </p>
+                  <pre className="overflow-x-auto font-mono text-xs leading-relaxed text-archive-deep-foreground/90">
+                    {codeContext.snippet}
+                  </pre>
+                </>
+              ) : (
+                <p className="text-xs text-archive-deep-foreground/70">
+                  {currentQuestion
+                    ? "No code path attached to this question — evidence may be ticket or commit based."
+                    : "Select a brief question to see linked code context."}
+                </p>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Right column */}
         <div className="space-y-4">
           <div className="rounded-xl border border-border/80 bg-receipt p-4 shadow-soft">
             <div className="mb-3 flex items-center justify-between">
@@ -234,11 +289,20 @@ export function InterviewStudioPanel({
                 <div className="rounded-lg border border-amber/30 bg-amber/8 p-4">
                   <p className="section-label mb-2 text-amber">Ask this now</p>
                   <p className="font-display text-base leading-snug text-ink">
-                    {currentQuestion?.question_text}
+                    {displayBriefQuestionText(currentQuestion?.question_text ?? "")}
                   </p>
-                  <div className="mt-3">
-                    <CitationChip label="ledger_sync.py:88-101" variant="code" as="span" />
-                  </div>
+                  {questionChips.length > 0 ? (
+                    <div className="mt-3 flex flex-wrap gap-1.5">
+                      {questionChips.map((chip) => (
+                        <CitationChip
+                          key={chip.label}
+                          label={chip.label}
+                          variant={chip.variant}
+                          as="span"
+                        />
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
                 <div className="mt-4 flex justify-between">
                   <Button
@@ -269,9 +333,12 @@ export function InterviewStudioPanel({
           </div>
 
           <div className="rounded-xl border border-border/80 bg-receipt shadow-soft">
-            <div className="flex items-center justify-between border-b border-border/60 px-4 py-2.5">
-              <p className="section-label text-muted-foreground">Live transcript</p>
-              <Button variant="ghost" size="sm" className="h-7 text-xs">
+            <div className="flex items-center justify-between gap-2 border-b border-border/60 px-4 py-2.5">
+              <div>
+                <p className="section-label text-muted-foreground">Transcript</p>
+                <p className="text-[10px] text-muted-foreground">Indexed after stop / upload (Whisper)</p>
+              </div>
+              <Button variant="ghost" size="sm" className="h-7 text-xs" disabled>
                 <Link2 className="size-3" />
                 Link all
               </Button>
@@ -303,9 +370,13 @@ export function InterviewStudioPanel({
                         </button>
                       </div>
                       <p className="mt-1 leading-relaxed text-ink">{seg.text}</p>
-                      {linked ? (
+                      {linked && questionChips[0] ? (
                         <div className="mt-2">
-                          <CitationChip label="batch_runner.py:89" variant="code" as="span" />
+                          <CitationChip
+                            label={questionChips[0].label}
+                            variant={questionChips[0].variant}
+                            as="span"
+                          />
                         </div>
                       ) : null}
                     </div>
@@ -313,12 +384,22 @@ export function InterviewStudioPanel({
                 })
               ) : (
                 <p className="py-6 text-center text-sm text-muted-foreground">
-                  {activeInterview
-                    ? "Transcript will appear after recording or upload."
-                    : "Start an interview from the Archaeology Brief tab."}
+                  {activeInterview?.status === "transcribing"
+                    ? "Whisper is transcribing your recording…"
+                    : recording
+                      ? "Stop recording to upload and transcribe."
+                      : activeInterview
+                        ? "Transcript appears here after you stop recording or upload a clip."
+                        : "Start an interview from the Archaeology Brief tab."}
                 </p>
               )}
               {recording ? (
+                <div className="flex items-center gap-2 rounded-lg border border-dashed border-border px-3 py-2 text-xs text-muted-foreground">
+                  <Loader2 className="size-3 animate-spin" />
+                  Recording in progress…
+                </div>
+              ) : null}
+              {activeInterview?.status === "transcribing" ? (
                 <div className="flex items-center gap-2 rounded-lg border border-dashed border-border px-3 py-2 text-xs text-muted-foreground">
                   <Loader2 className="size-3 animate-spin" />
                   Transcribing…

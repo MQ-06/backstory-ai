@@ -1,4 +1,4 @@
-.PHONY: help up down db-migrate db-revision demo-seed dev dev-web dev-api dev-worker test lint install
+.PHONY: help up down db-migrate db-revision demo-seed demo-verify demo-walkthrough e2e-install dev dev-web dev-api dev-worker test lint install
 
 help:
 	@echo "Backstory-AI — dev commands"
@@ -7,12 +7,18 @@ help:
 	@echo "  make down        Stop docker services"
 	@echo "  make db-migrate  Run Alembic migrations"
 	@echo "  make demo-seed   Seed payroll demo engagement (set DEMO_CLERK_ORG_ID)"
+	@echo "  make demo-verify Run demo path API tests"
+	@echo "  make demo-walkthrough Verify seeded demo (Ask/Capture/Library data path)"
+	@echo "  make e2e-install Install Playwright Chromium (~300MB, once per Playwright upgrade)"
+	@echo "  make e2e-install-force Re-download browsers if version mismatch (1223 vs 1228)"
 	@echo "  make dev         Start web + API (parallel)"
 	@echo "  make dev-worker  Start Celery ingest worker (separate terminal)"
-	@echo "  make test        Run all tests"
+	@echo "  make test        Run API + web unit tests"
+	@echo "  make test-e2e    Run Playwright E2E (API :8001, web dev :3002)"
 
 install:
 	pnpm install
+	pnpm test:e2e:install
 	cd apps/api && uv sync --dev
 
 up:
@@ -32,6 +38,19 @@ db-revision:
 
 demo-seed:
 	cd apps/api && uv run python scripts/seed_demo.py
+	@echo "Done. Set DEMO_CLERK_ORG_ID to your Clerk org id before seeding (see apps/api/scripts/DEMO_RUNBOOK.md)."
+
+demo-verify:
+	cd apps/api && uv run pytest -q tests/test_demo_path.py
+
+demo-walkthrough:
+	cd apps/api && uv run python scripts/verify_demo_walkthrough.py
+
+e2e-install:
+	cd e2e && CI=1 pnpm install --no-frozen-lockfile && pnpm exec playwright install chromium chromium-headless-shell
+
+e2e-install-force:
+	cd e2e && CI=1 pnpm install --no-frozen-lockfile && pnpm exec playwright install --force chromium chromium-headless-shell
 
 dev:
 	@echo "Starting API (8000) + web (3000) — Ctrl+C stops both"
@@ -49,6 +68,10 @@ dev-worker:
 test:
 	cd apps/api && uv run pytest -q
 	pnpm --filter web test
+
+test-e2e: e2e-install
+	@echo "Running E2E (API :8001, web dev :3002 — safe alongside make dev on :3000)…"
+	E2E_TEST_MODE=1 pnpm test:e2e
 
 lint:
 	cd apps/api && uv run ruff check .

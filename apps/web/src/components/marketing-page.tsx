@@ -11,6 +11,8 @@ import Link from "next/link";
 
 import { HowStepper } from "@/components/marketing/how-stepper";
 import { LiveDemo } from "@/components/marketing/live-demo";
+import { MarketingCtaBand } from "@/components/marketing/cta-band";
+import { MarketingSiteFooter } from "@/components/marketing/site-footer";
 import { ScrollReveal } from "@/components/marketing/scroll-reveal";
 import { TickerBand } from "@/components/marketing/ticker-band";
 import { TrustStats } from "@/components/marketing/trust-stats";
@@ -188,45 +190,9 @@ export function MarketingPage() {
           </div>
         </section>
 
-        <section className="marketing-cta-band py-24">
-          <ScrollReveal>
-            <div className="mx-auto max-w-3xl px-6 text-center">
-              <h2 className="font-display text-3xl tracking-tight text-balance sm:text-4xl">
-                Stop losing the why when people leave.
-              </h2>
-              <p className="mt-5 text-lg opacity-80">
-                Sign up, create an engagement, and start building memory for your next modernization.
-              </p>
-              <div className="mt-10 flex flex-wrap justify-center gap-3">
-                <Link
-                  href="/sign-up"
-                  className={cn(
-                    buttonVariants({ size: "lg" }),
-                    "h-12 bg-ink px-8 font-semibold text-receipt hover:bg-ink/90",
-                  )}
-                >
-                  Create account
-                </Link>
-                <Link
-                  href="/sign-in"
-                  className={cn(
-                    buttonVariants({ size: "lg", variant: "outline" }),
-                    "h-12 border-ink/30 bg-transparent px-8 font-semibold text-ink hover:bg-ink/5",
-                  )}
-                >
-                  Log in
-                </Link>
-              </div>
-            </div>
-          </ScrollReveal>
-        </section>
+        <MarketingCtaBand />
 
-        <footer className="border-t border-border bg-archive-deep py-10 text-archive-deep-foreground/60">
-          <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 text-sm sm:flex-row">
-            <span className="font-display text-base text-archive-deep-foreground">Backstory</span>
-            <span>© {new Date().getFullYear()} · Remembers why</span>
-          </div>
-        </footer>
+        <MarketingSiteFooter />
       </main>
     </div>
   );

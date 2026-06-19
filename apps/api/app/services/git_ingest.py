@@ -203,6 +203,14 @@ def get_head_sha(repo_dir: Path) -> str:
     return _run_git(["rev-parse", "HEAD"], cwd=repo_dir)
 
 
+def get_default_branch(repo_dir: Path) -> str:
+    """Return checked-out branch name after shallow clone."""
+    try:
+        return _run_git(["rev-parse", "--abbrev-ref", "HEAD"], cwd=repo_dir)
+    except RuntimeError:
+        return "main"
+
+
 def list_commits(repo_dir: Path) -> list[dict[str, str]]:
     fmt = "%H%x1f%an%x1f%ae%x1f%at%x1f%s"
     output = _run_git(["log", f"--format={fmt}", f"-{MAX_COMMITS}"], cwd=repo_dir)
@@ -236,6 +244,7 @@ def ingest_git_source(db: Session, source: Source, repo_url: str) -> GitIngestRe
     try:
         clone_repo(repo_url, tmpdir)
         head_sha = get_head_sha(tmpdir)
+        default_branch = get_default_branch(tmpdir)
 
         source.status_detail = f"Parsing files @ {head_sha[:7]}…"
         db.flush()
@@ -331,6 +340,8 @@ def ingest_git_source(db: Session, source: Source, repo_url: str) -> GitIngestRe
         config = dict(source.config or {})
         config.update(
             {
+                "repo_url": repo_url,
+                "branch": default_branch,
                 "head_sha": head_sha,
                 "file_count": file_count,
                 "commit_count": commit_count,

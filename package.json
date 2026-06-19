@@ -8,14 +8,18 @@
     "build": "pnpm --filter web build",
     "lint": "pnpm -r lint",
     "test": "pnpm -r test",
-    "test:e2e": "playwright test -c e2e/playwright.config.ts",
+    "test:e2e": "cd e2e && pnpm exec playwright test -c playwright.config.ts",
+    "test:e2e:install": "cd e2e && CI=1 pnpm install --no-frozen-lockfile && pnpm exec playwright install chromium chromium-headless-shell",
+    "test:e2e:install:force": "cd e2e && CI=1 pnpm install --no-frozen-lockfile && pnpm exec playwright install --force chromium chromium-headless-shell",
     "typecheck": "pnpm -r typecheck"
   },
   "engines": {
     "node": ">=20"
   },
   "packageManager": "pnpm@9.15.0",
-  "devDependencies": {
-    "@playwright/test": "^1.49.0"
+  "pnpm": {
+    "peerDependencyRules": {
+      "ignoreMissing": ["@playwright/test"]
+    }
   }
 }

@@ -3,7 +3,7 @@ from dataclasses import dataclass
 import httpx
 import jwt
 from jwt.algorithms import RSAAlgorithm
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -73,9 +73,19 @@ async def get_or_create_org(db: AsyncSession, clerk_org_id: str, name: str = "Or
 
 
 async def get_auth_context(
+    request: Request,
     credentials: HTTPAuthorizationCredentials | None = Depends(security),
     db: AsyncSession = Depends(get_db),
 ) -> AuthContext:
+    settings = get_settings()
+    # E2E-only bypass — never enable in production
+    if settings.e2e_test_mode:
+        org_header = request.headers.get("X-E2E-Org-Id")
+        user_header = request.headers.get("X-E2E-User-Id", "e2e_user")
+        if org_header:
+            org = await get_or_create_org(db, org_header, name="E2E Org")
+            return AuthContext(clerk_user_id=user_header, clerk_org_id=org_header, org=org)
+
     if credentials is None or not credentials.credentials:
         raise HTTPException(status_code=401, detail="Missing authorization header")
 

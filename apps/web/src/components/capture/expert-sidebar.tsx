@@ -37,7 +37,7 @@ export function ExpertSidebar({
   signals,
 }: {
   experts: ExpertProfile[];
-  selectedExpertId: string;
+  selectedExpertId: string | null;
   onSelectExpert: (id: string) => void;
   moduleHeat: ModuleHeat[];
   signals: { label: string; tone: "high" | "med" | "low" }[];
@@ -50,62 +50,80 @@ export function ExpertSidebar({
           <span className="text-[10px] text-muted-foreground">by risk score</span>
         </div>
         <div className="space-y-2">
-          {experts.map((expert) => {
-            const selected = expert.id === selectedExpertId;
-            return (
-              <button
-                key={expert.id}
-                type="button"
-                onClick={() => onSelectExpert(expert.id)}
-                className={cn(
-                  "flex w-full items-start gap-3 rounded-xl border px-3 py-3 text-left transition-all",
-                  selected
-                    ? "border-amber/35 bg-amber/8 shadow-soft"
-                    : "border-border/80 bg-receipt hover:border-amber/20",
-                )}
-              >
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-parchment text-xs font-bold text-ink">
-                  {expert.initials}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="font-medium text-ink">{expert.name}</p>
-                    <span
-                      className={cn(
-                        "rounded-full border px-1.5 py-0.5 text-[9px] font-bold uppercase",
-                        RISK_BADGE[expert.risk],
-                      )}
-                    >
-                      {expert.risk}
-                    </span>
+          {experts.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-border bg-parchment/50 px-3 py-4 text-xs text-muted-foreground">
+              No experts inferred yet — generate a brief after indexing Git and tickets, or name an
+              expert above.
+            </p>
+          ) : (
+            experts.map((expert) => {
+              const selected = expert.id === selectedExpertId;
+              return (
+                <button
+                  key={expert.id}
+                  type="button"
+                  onClick={() => onSelectExpert(expert.id)}
+                  className={cn(
+                    "flex w-full items-start gap-3 rounded-xl border px-3 py-3 text-left transition-all",
+                    selected
+                      ? "border-amber/35 bg-amber/8 shadow-soft"
+                      : "border-border/80 bg-receipt hover:border-amber/20",
+                  )}
+                >
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-parchment text-xs font-bold text-ink">
+                    {expert.initials}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-medium text-ink">{expert.name}</p>
+                      <span
+                        className={cn(
+                          "rounded-full border px-1.5 py-0.5 text-[9px] font-bold uppercase",
+                          RISK_BADGE[expert.risk],
+                        )}
+                      >
+                        {expert.risk}
+                      </span>
+                    </div>
+                    <p className="mt-0.5 text-xs text-muted-foreground">{expert.role}</p>
                   </div>
-                  <p className="mt-0.5 text-xs text-muted-foreground">{expert.role}</p>
-                </div>
-              </button>
-            );
-          })}
+                </button>
+              );
+            })
+          )}
         </div>
       </section>
 
       <section>
         <p className="section-label mb-3 text-muted-foreground">Module heat</p>
         <div className="mb-3 grid grid-cols-2 gap-2">
-          {signals.map((signal) => (
-            <div
-              key={signal.label}
-              className={cn(
-                "rounded-lg border px-2.5 py-2 text-[10px] leading-snug",
-                signal.tone === "high" && "border-red-200 bg-red-50 text-red-900",
-                signal.tone === "med" && "border-amber/30 bg-amber/8 text-ink",
-                signal.tone === "low" && "border-border bg-parchment/60 text-muted-foreground",
-              )}
-            >
-              {signal.label}
-            </div>
-          ))}
+          {signals.length === 0 ? (
+            <p className="col-span-2 rounded-lg border border-dashed border-border bg-parchment/40 px-2.5 py-3 text-[10px] text-muted-foreground">
+              Risk signals appear after source ingestion and brief generation.
+            </p>
+          ) : (
+            signals.map((signal) => (
+              <div
+                key={signal.label}
+                className={cn(
+                  "rounded-lg border px-2.5 py-2 text-[10px] leading-snug",
+                  signal.tone === "high" && "border-red-200 bg-red-50 text-red-900",
+                  signal.tone === "med" && "border-amber/30 bg-amber/8 text-ink",
+                  signal.tone === "low" && "border-border bg-parchment/60 text-muted-foreground",
+                )}
+              >
+                {signal.label}
+              </div>
+            ))
+          )}
         </div>
         <div className="space-y-1.5">
-          {moduleHeat.map((mod) => (
+          {moduleHeat.length === 0 ? (
+            <p className="rounded-lg border border-dashed border-border bg-parchment/40 px-3 py-2 text-xs text-muted-foreground">
+              Module heat maps from indexed file paths in brief signals.
+            </p>
+          ) : (
+            moduleHeat.map((mod) => (
             <div
               key={mod.path}
               className="flex items-center justify-between gap-2 rounded-lg border border-border/60 bg-receipt px-3 py-2"
@@ -113,7 +131,8 @@ export function ExpertSidebar({
               <span className="truncate font-mono text-xs text-ink">{mod.path}</span>
               <span className={cn("size-3 shrink-0 rounded-sm", RISK_SQUARE[mod.risk])} />
             </div>
-          ))}
+            ))
+          )}
         </div>
       </section>
     </aside>
