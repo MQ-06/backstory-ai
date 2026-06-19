@@ -35,10 +35,11 @@ def _system_prompt() -> str:
 Rules:
 1. Use ONLY the risk signals provided — never invent history.
 2. Output 5-8 questions an expert can answer that others cannot infer from code alone.
-3. Each question MUST reference signal IDs like [S1] in parentheses.
+3. Write natural interview questions — do NOT include signal IDs ([S1]), signal_type names (ticket_spike), or JSON in the question text.
 4. Format each question on its own line starting with "Q: "
-5. Questions should be specific, respectful, and worth the expert's time.
-6. No bullet lists, no duplicate summary section."""
+5. Questions should be specific, concrete, and worth the expert's time — one topic per question.
+6. Prefer incident stories, tradeoffs, and "what breaks if we change X" over generic architecture prompts.
+7. No bullet lists, no duplicate summary section."""
 
 
 def _user_prompt(signals: list[RiskSignal], expert_name: str | None, module_path: str | None) -> str:
@@ -53,7 +54,13 @@ def _user_prompt(signals: list[RiskSignal], expert_name: str | None, module_path
 Risk signals:
 {_signals_block(signals)}
 
-Generate questions as "Q: ..." lines with [Sn] citations."""
+Generate questions as "Q: ..." lines. Do not cite [Sn] in the question text."""
+
+
+def _sanitize_question_text(text: str) -> str:
+    cleaned = re.sub(r"\[(?:S|SI)\d+\]", "", text, flags=re.IGNORECASE)
+    cleaned = re.sub(r"\s{2,}", " ", cleaned).strip()
+    return cleaned
 
 
 def _parse_questions(raw: str) -> list[str]:
@@ -63,11 +70,11 @@ def _parse_questions(raw: str) -> list[str]:
         if not line:
             continue
         if line.upper().startswith("Q:"):
-            questions.append(line[2:].strip())
+            questions.append(_sanitize_question_text(line[2:].strip()))
             continue
         match = _QUESTION_LINE_RE.match(line)
         if match and "?" in line:
-            questions.append(match.group(1).strip())
+            questions.append(_sanitize_question_text(match.group(1).strip()))
     return questions[:8]
 
 

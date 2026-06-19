@@ -12,6 +12,7 @@ import { WorkspaceHeader } from "@/components/workspace-header";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { fetchLibrary, type LibraryArtifact } from "@/lib/api";
+import { libraryAskQuestion } from "@/lib/brief-question-text";
 import { cn } from "@/lib/utils";
 
 type ArtifactKind = LibraryArtifact["kind"] | "all";
@@ -57,7 +58,7 @@ export function LibraryPageClient() {
     artifacts.find((a) => a.id === selectedId) ?? artifacts[0] ?? null;
 
   const askHref = selected
-    ? `/ask?q=${encodeURIComponent(`What should I know about ${selected.name}?`)}`
+    ? `/ask?q=${encodeURIComponent(libraryAskQuestion(selected))}&auto=1`
     : "/ask";
 
   const coverage = summary

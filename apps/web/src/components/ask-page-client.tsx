@@ -40,12 +40,14 @@ export function AskPageClient() {
   const [error, setError] = useState<string | null>(null);
   const [selectedCitation, setSelectedCitation] = useState<AskCitation | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const autoAskedRef = useRef(false);
 
   const engagementId = activeEngagement?.id;
 
   useEffect(() => {
     const q = searchParams.get("q");
     if (q) setQuestion(q);
+    autoAskedRef.current = false;
   }, [searchParams]);
 
   const resetAnswer = () => {
@@ -57,60 +59,72 @@ export function AskPageClient() {
     setSelectedCitation(null);
   };
 
-  const handleAsk = useCallback(async () => {
-    const trimmed = question.trim();
-    if (!trimmed || !engagementId || isAsking) return;
+  const handleAsk = useCallback(
+    async (questionOverride?: string) => {
+      const trimmed = (questionOverride ?? question).trim();
+      if (!trimmed || !engagementId || isAsking) return;
 
-    abortRef.current?.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
 
-    resetAnswer();
-    setAskedQuestion(trimmed);
-    setIsAsking(true);
+      resetAnswer();
+      setAskedQuestion(trimmed);
+      setIsAsking(true);
 
-    try {
-      const token = await getToken();
-      if (!token) throw new Error("Not signed in — refresh the page and try again.");
+      try {
+        const token = await getToken();
+        if (!token) throw new Error("Not signed in — refresh the page and try again.");
 
-      const seenCitationKeys = new Set<string>();
+        const seenCitationKeys = new Set<string>();
 
-      await streamAsk({
-        token,
-        engagementId,
-        question: trimmed,
-        signal: controller.signal,
-        onStatus: setStatus,
-        onToken: (tokenText) => setAnswerText((prev) => prev + tokenText),
-        onCitation: (citation) => {
-          const key = `${citation.label}-${citation.passage_id ?? citation.id}`;
-          if (seenCitationKeys.has(key)) return;
-          seenCitationKeys.add(key);
-          setCitations((prev) => [...prev, citation]);
-        },
-        onRefusal: (reason) => setRefusalReason(reason),
-        onError: (message) => setError(formatErrorMessage(message, "Ask failed")),
-        onDone: (event: AskDoneEvent) => {
-          if (event.refused) {
-            setRefusalReason((prev) => prev ?? "No grounded evidence found.");
-            setAnswerText("");
-          } else if (event.answer_text) {
-            setAnswerText(event.answer_text);
-          }
-          if (event.citations?.length) {
-            setCitations(event.citations);
-          }
-        },
-      });
-    } catch (err) {
-      if (controller.signal.aborted) return;
-      const message = formatErrorMessage(err, "Could not complete ask request");
-      setError(message);
-    } finally {
-      setIsAsking(false);
-      setStatus(null);
-    }
-  }, [question, engagementId, isAsking, getToken]);
+        await streamAsk({
+          token,
+          engagementId,
+          question: trimmed,
+          signal: controller.signal,
+          onStatus: setStatus,
+          onToken: (tokenText) => setAnswerText((prev) => prev + tokenText),
+          onCitation: (citation) => {
+            const key = `${citation.label}-${citation.passage_id ?? citation.id}`;
+            if (seenCitationKeys.has(key)) return;
+            seenCitationKeys.add(key);
+            setCitations((prev) => [...prev, citation]);
+          },
+          onRefusal: (reason) => setRefusalReason(reason),
+          onError: (message) => setError(formatErrorMessage(message, "Ask failed")),
+          onDone: (event: AskDoneEvent) => {
+            if (event.refused) {
+              setRefusalReason((prev) => prev ?? "No grounded evidence found.");
+              setAnswerText("");
+            } else if (event.answer_text) {
+              setAnswerText(event.answer_text);
+            }
+            if (event.citations?.length) {
+              setCitations(event.citations);
+            }
+          },
+        });
+      } catch (err) {
+        if (controller.signal.aborted) return;
+        const message = formatErrorMessage(err, "Could not complete ask request");
+        setError(message);
+      } finally {
+        setIsAsking(false);
+        setStatus(null);
+      }
+    },
+    [question, engagementId, isAsking, getToken],
+  );
+
+  useEffect(() => {
+    const q = searchParams.get("q")?.trim();
+    const auto = searchParams.get("auto") === "1";
+    if (!auto || !q || !engagementId || isAsking || autoAskedRef.current) return;
+    if (question.trim() !== q) return;
+    autoAskedRef.current = true;
+    void handleAsk(q);
+  }, [searchParams, engagementId, question, isAsking, handleAsk]);
 
   const showResults =
     isAsking || Boolean(answerText || refusalReason || error || citations.length > 0);

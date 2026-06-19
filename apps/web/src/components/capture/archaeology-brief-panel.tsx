@@ -16,6 +16,8 @@ import { ExpertSidebar } from "@/components/capture/expert-sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { ArchaeologyBrief, Interview } from "@/lib/api";
+import { downloadBriefMarkdown } from "@/lib/brief-export";
+import { displayBriefQuestionText } from "@/lib/brief-question-text";
 import { cn } from "@/lib/utils";
 
 function evidenceFromRecord(evidence: Record<string, unknown> | null) {
@@ -108,7 +110,15 @@ export function ArchaeologyBriefPanel({
             </p>
           </div>
           <div className="flex shrink-0 gap-2">
-            <Button variant="outline" size="sm" disabled={!brief}>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!brief || brief.questions.length === 0}
+              onClick={() => {
+                if (!brief) return;
+                downloadBriefMarkdown(brief, displayExpert, displayModule);
+              }}
+            >
               <Download className="size-3.5" />
               Export
             </Button>
@@ -171,7 +181,7 @@ export function ArchaeologyBriefPanel({
                 <BriefQuestionCard
                   key={q.id}
                   rank={q.rank}
-                  text={q.question_text}
+                  text={displayBriefQuestionText(q.question_text)}
                   expanded={expanded}
                   onToggle={() => setExpandedRank(expanded ? null : q.rank)}
                   evidenceChips={chips}
@@ -192,9 +202,12 @@ export function ArchaeologyBriefPanel({
 
         {brief?.status === "ready" && brief.questions.length > 0 ? (
           <div className="flex flex-wrap justify-end gap-3 border-t border-border/70 pt-5">
-            <Button variant="outline" disabled>
+            <Button
+              variant="outline"
+              onClick={() => downloadBriefMarkdown(brief, displayExpert, displayModule)}
+            >
               <Download className="size-4" />
-              Download PDF
+              Export markdown
             </Button>
             <Button
               className={cn("bg-ink text-receipt hover:bg-ink/90")}

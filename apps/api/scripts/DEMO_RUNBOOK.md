@@ -73,7 +73,9 @@ make test-e2e             # all 9 tests (API :8001, web dev :3002; safe alongsid
 | Citations lack GitHub links | Git source must include `repo_url` in config (seed sets this) |
 | Worker clones `github.com/demo/payroll` and fails | From old E2E runs — restart worker; fixed in latest tests |
 | Playwright browser missing | `make e2e-install-force` then `make test-e2e` |
-| E2E sign-in fails / body hidden | Stop reusing `make dev` on :3000 — E2E uses its own dev server on `localhost:3002` with `.next-e2e` |
+| Brief export does nothing | Use **Export** — downloads `.md`; regenerate brief for cleaner questions |
+| Library **Ask about this file** | Opens Ask and auto-runs a grounded question for that artifact |
+| Transcript empty while recording | Normal — transcript appears after **Stop** or **Upload** (Whisper + worker) |
 | E2E `ERR_NETWORK_CHANGED` | Run `make test-e2e` (Playwright starts isolated `next dev`, not hot reload on :3000) |
 
 ## Staging

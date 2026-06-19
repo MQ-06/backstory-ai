@@ -138,6 +138,17 @@ export function InterviewsPageClient() {
     };
   }, [stopPreviewStream]);
 
+  useEffect(() => {
+    if (!activeInterview) return;
+    const fresh = interviews.find((row) => row.id === activeInterview.id);
+    if (!fresh) return;
+    const segmentCount = fresh.segments?.length ?? 0;
+    const activeSegmentCount = activeInterview.segments?.length ?? 0;
+    if (fresh.status !== activeInterview.status || segmentCount !== activeSegmentCount) {
+      setActiveInterview(fresh);
+    }
+  }, [interviews, activeInterview]);
+
   const uploadBlob = useCallback(
     async (blob: Blob, filename: string) => {
       const token = await getToken();

@@ -13,6 +13,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { CitationChip } from "@/components/ask/citation-chip";
 import { codeContextFromEvidence, evidenceChipsFromRecord } from "@/components/capture/brief-sidebar-data";
+import { displayBriefQuestionText } from "@/lib/brief-question-text";
 import { Button } from "@/components/ui/button";
 import type { ArchaeologyBrief, Interview, TranscriptSegment } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -288,7 +289,7 @@ export function InterviewStudioPanel({
                 <div className="rounded-lg border border-amber/30 bg-amber/8 p-4">
                   <p className="section-label mb-2 text-amber">Ask this now</p>
                   <p className="font-display text-base leading-snug text-ink">
-                    {currentQuestion?.question_text}
+                    {displayBriefQuestionText(currentQuestion?.question_text ?? "")}
                   </p>
                   {questionChips.length > 0 ? (
                     <div className="mt-3 flex flex-wrap gap-1.5">
@@ -332,8 +333,11 @@ export function InterviewStudioPanel({
           </div>
 
           <div className="rounded-xl border border-border/80 bg-receipt shadow-soft">
-            <div className="flex items-center justify-between border-b border-border/60 px-4 py-2.5">
-              <p className="section-label text-muted-foreground">Live transcript</p>
+            <div className="flex items-center justify-between gap-2 border-b border-border/60 px-4 py-2.5">
+              <div>
+                <p className="section-label text-muted-foreground">Transcript</p>
+                <p className="text-[10px] text-muted-foreground">Indexed after stop / upload (Whisper)</p>
+              </div>
               <Button variant="ghost" size="sm" className="h-7 text-xs" disabled>
                 <Link2 className="size-3" />
                 Link all
@@ -380,9 +384,13 @@ export function InterviewStudioPanel({
                 })
               ) : (
                 <p className="py-6 text-center text-sm text-muted-foreground">
-                  {activeInterview
-                    ? "Transcript will appear after recording or upload."
-                    : "Start an interview from the Archaeology Brief tab."}
+                  {activeInterview?.status === "transcribing"
+                    ? "Whisper is transcribing your recording…"
+                    : recording
+                      ? "Stop recording to upload and transcribe."
+                      : activeInterview
+                        ? "Transcript appears here after you stop recording or upload a clip."
+                        : "Start an interview from the Archaeology Brief tab."}
                 </p>
               )}
               {recording ? (
