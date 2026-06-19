@@ -439,17 +439,29 @@
   }
 
   .marketing-cta-band {
-    background: linear-gradient(
-      135deg,
-      color-mix(in srgb, var(--amber) 85%, var(--archive-deep)) 0%,
-      var(--amber) 50%,
-      color-mix(in srgb, var(--amber) 70%, var(--archive-deep)) 100%
-    );
-    color: var(--archive-deep);
+    background: color-mix(in srgb, var(--parchment) 92%, var(--amber) 4%);
   }
 
   .dark .marketing-cta-band {
-    color: var(--archive-deep);
+    background: color-mix(in srgb, var(--parchment) 96%, var(--amber) 5%);
+  }
+
+  .dark .marketing-cta-band .bg-ink {
+    background: var(--receipt);
+    color: var(--ink);
+  }
+
+  .dark .marketing-cta-band .bg-ink:hover {
+    background: color-mix(in srgb, var(--receipt) 90%, var(--amber) 8%);
+  }
+
+  .cta-center-accent {
+    box-shadow: 0 0 20px color-mix(in srgb, var(--amber) 40%, transparent);
+  }
+
+  .cta-receipt-card:focus-within {
+    outline: 2px solid color-mix(in srgb, var(--amber) 45%, transparent);
+    outline-offset: 4px;
   }
 
   .marketing-ticker {
