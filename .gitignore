@@ -11,6 +11,7 @@ apps/api/.venv/
 
 # ─── Build & cache ───
 .next/
+.next-e2e/
 out/
 dist/
 build/

@@ -100,5 +100,5 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: uv sync --dev
         working-directory: apps/api
-      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e:install
       - run: pnpm test:e2e
