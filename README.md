@@ -1,223 +1,43 @@
 <div align="center">
 
-# Backstory
-
-### Code tells you what — <span style="color:#d4954a">Backstory remembers why.</span>
-
-**The memory layer for legacy systems.**  
-Cited answers from code, tickets, documents, and expert interviews — with receipts you can click, not vibes you have to trust.
+<img src=".github/assets/readme-banner.svg" alt="Backstory — memory layer for legacy systems" width="920" />
 
 <br />
 
-[![CI](https://img.shields.io/github/actions/workflow/status/MQ-06/backstory-ai/ci.yml?branch=main&label=CI&style=flat-square&color=d4954a)](https://github.com/MQ-06/backstory-ai/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/MQ-06/backstory-ai?style=flat-square&color=c8853a&label=MVP)](https://github.com/MQ-06/backstory-ai/releases)
-[![Features](https://img.shields.io/badge/MVP-Features%201%E2%80%9310-1a1410?style=flat-square&labelColor=f0ebe3)](FEATURES.md)
+<a href="https://backstory-ai.vercel.app">
+  <img src="https://img.shields.io/badge/→_Try_it_live-backstory--ai.vercel.app-d4954a?style=for-the-badge&labelColor=1a1410&color=f0ebe3" alt="Try it live" />
+</a>
 
-<br />
+<br /><br />
 
-[**Live app →**](https://backstory-ai.vercel.app) · [**API health →**](https://backstory-ai.onrender.com/health) · [**Features spec →**](FEATURES.md)
-
-<br />
-
-<img src=".github/assets/readme-hero.png" alt="Backstory — landing page and Answer Receipt with code, ticket, and interview citations" width="920" />
-
-*Ask a question. Get an answer with proof — `payroll_calc.py:142` · `JIRA-4821` · `Interview @ 04:12`*
+<img src=".github/assets/readme-hero.png" alt="Backstory Ask screen with Answer Receipt citations" width="920" />
 
 </div>
 
 <br />
 
----
+<table width="100%"><tr><td bgcolor="#1a1410" style="padding:28px 32px;border-radius:14px;">
 
-## Not another chatbot on your repo
+<p align="center" style="color:#9a8f82;font-size:12px;letter-spacing:0.14em;margin:0 0 12px 0;">THE IDEA</p>
 
-Backstory is a **serious instrument** for teams who cannot afford wrong answers in production. It captures the *why* behind legacy systems — from decades of commits and tickets, from departing experts on camera, from every fix as it happens — and delivers it **at the moment someone asks**.
+<p align="center" style="color:#f0ebe3;font-size:17px;line-height:1.6;margin:0;max-width:720px;">
+Legacy systems don’t fail because the code is missing.<br/>
+They fail because the <strong style="color:#d4954a;">why</strong> was never written down.
+</p>
 
-<table>
-<tr>
-<td width="33%" align="center"><strong style="color:#d4954a">Capture</strong><br/><sub>Pull a why into the system</sub></td>
-<td width="33%" align="center"><strong style="color:#4a9b72">Deliver</strong><br/><sub>Surface it when needed</sub></td>
-<td width="33%" align="center"><strong style="color:#9a8f82">Protect</strong><br/><sub>Guard risky changes · coming V1.1</sub></td>
-</tr>
-</table>
+<p align="center" style="color:#9a8f82;font-size:15px;line-height:1.65;margin:18px 0 0 0;">
+Git · tickets · docs · expert interviews — one memory layer.<br/>
+Ask in plain English. Every answer ships with <strong style="color:#4a9b72;">receipts you can click</strong>.<br/>
+No evidence? <strong style="color:#c9a07a;">“I don’t have this.”</strong> Always.
+</p>
 
-<br />
-
-> **Trust contract:** No source, no claim. Insufficient evidence → **“I don’t have this.”** Non-configurable. Engagement-scoped. Always.
-
-<br />
-
----
-
-## What ships in v0.1.0
-
-<table>
-<tr><td><strong style="color:#d4954a">01</strong></td><td><strong>Git ingestion</strong></td><td>Repos, commits, blame — indexed per engagement</td></tr>
-<tr><td><strong style="color:#d4954a">02</strong></td><td><strong>Ticket import</strong></td><td>GitHub Issues (Jira/Linear on roadmap)</td></tr>
-<tr><td><strong style="color:#d4954a">03</strong></td><td><strong>Document upload</strong></td><td>PDFs, Word, runbooks</td></tr>
-<tr><td><strong style="color:#d4954a">04</strong></td><td><strong>Code linking</strong></td><td>Tickets & docs pinned to files and line ranges</td></tr>
-<tr><td><strong style="color:#d4954a">05</strong></td><td><strong>Video interviews</strong></td><td>Timestamped transcripts · clip citations</td></tr>
-<tr><td><strong style="color:#4a9b72">06</strong></td><td><strong>Plain-language Ask</strong></td><td>One box · all horizons at once</td></tr>
-<tr><td><strong style="color:#4a9b72">07</strong></td><td><strong>Honest refusal</strong></td><td>No hallucination when memory is thin</td></tr>
-<tr><td><strong style="color:#4a9b72">08</strong></td><td><strong>Cross-horizon search</strong></td><td>Code + tickets + docs + interviews together</td></tr>
-<tr><td><strong style="color:#4a9b72">09</strong></td><td><strong>Answer Receipts</strong></td><td>Every claim → clickable proof</td></tr>
-<tr><td><strong style="color:#d4954a">10</strong></td><td><strong>Archaeology Brief</strong></td><td>Interview prep from risk signals in the system</td></tr>
-</table>
-
-<details>
-<summary><strong>Upcoming · Features 11–17</strong></summary>
+</td></tr></table>
 
 <br />
 
-| Wave | Features |
-|------|----------|
-| **V1.1** | 11 Guardian Mode · 12 Post-fix micro-interview · 13 Verbal commits |
-| **Pilot** | 14 Completeness score · 15 Knowledge handshake |
-| **Enterprise** | 17 Insurance report · heatmap · self-hosted |
-| **V3** | 16 Code funeral notices |
-
-Full specs → [FEATURES.md](FEATURES.md)
-
-</details>
-
-<br />
-
----
-
-## Try it
-
-| | |
-|---|---|
-| **Web** | [backstory-ai.vercel.app](https://backstory-ai.vercel.app) |
-| **API** | [backstory-ai.onrender.com](https://backstory-ai.onrender.com) |
-| **Health** | `curl https://backstory-ai.onrender.com/health` |
-
-Sign in → **Settings** → copy your org id → seed the **Streetlight Payroll Demo** (see Quick start below).
-
-<br />
-
----
-
-## Quick start
-
-**Prerequisites:** Node 20+ · pnpm 9+ · Python 3.12+ · [uv](https://docs.astral.sh/uv/) · Docker · [Clerk](https://clerk.com) with Organizations
-
-```bash
-git clone git@github.com:MQ-06/backstory-ai.git
-cd backstory-ai
-
-cp .env.example apps/api/.env
-cp .env.example apps/web/.env.local
-# Clerk keys in both files · allow http://localhost:3000 in Clerk
-
-make install && make up && make db-migrate && make dev
-# separate terminal: make dev-worker
-```
-
-| Service | URL |
-|---------|-----|
-| Web | http://localhost:3000 |
-| API | http://localhost:8000/health |
-
-**Seed the demo** — sign in, open **Settings** (`/admin`), copy `DEMO_CLERK_ORG_ID`, then:
-
-```bash
-export DEMO_CLERK_ORG_ID=org_xxxxxxxx
-make demo-seed
-```
-
-**15-min demo path:** Sources → Ask (*Why does payroll fail on 31-day months?*) → Archaeology Brief → Interview Studio → Library.
-
-<br />
-
----
-
-## Architecture
-
-```mermaid
-flowchart TB
-  subgraph client["Browser"]
-    Web["Next.js · Vercel"]
-  end
-  subgraph api["Backstory API · Render"]
-    FastAPI["FastAPI"]
-    Worker["Celery worker"]
-  end
-  subgraph data["Data"]
-    Neon[("Neon · Postgres + pgvector")]
-    Redis[("Upstash · Redis")]
-  end
-  Clerk["Clerk · Auth"]
-  Groq["Groq · LLM + Whisper"]
-
-  Web -->|JWT| FastAPI
-  Web --> Clerk
-  FastAPI --> Neon
-  FastAPI --> Redis
-  Worker --> Redis
-  Worker --> Neon
-  FastAPI --> Groq
-  Worker --> Groq
-```
-
-<br />
-
----
-
-## Stack
-
-| Layer | Tech |
-|-------|------|
-| **Web** | Next.js 15 · TypeScript · Clerk · TanStack Query · shadcn/ui |
-| **API** | FastAPI · SQLAlchemy async · Alembic |
-| **Data** | Postgres + pgvector · Redis · R2 (later) |
-| **Jobs** | Celery — ingest · transcribe |
-| **LLM** | Groq (Ask, Brief, Whisper) · local embeddings |
-
-<br />
-
----
-
-## Brand palette
-
-Archival warm dark — not hacker green.
-
-| Token | Light | Dark |
-|-------|-------|------|
-| **Ink** | `#1a1410` | `#f0ebe3` |
-| **Parchment** | `#f7f3ec` | `#12100d` |
-| **Amber** | `#c8853a` | `#d4954a` |
-| **Proof** | `#2d6a4f` | `#4a9b72` |
-
-Defined in `apps/web/src/app/globals.css`.
-
-<br />
-
----
-
-## Development
-
-```bash
-make test                    # API pytest
-pnpm --filter web typecheck
-pnpm --filter web build
-make test-e2e                # Playwright (after make e2e-install)
-```
-
-CI on every push to `main` / `develop` → [.github/workflows/ci.yml](.github/workflows/ci.yml)
-
-<br />
-
----
-
-## Repository
-
-| Path | Purpose |
-|------|---------|
-| [FEATURES.md](FEATURES.md) | Feature specs · source of truth |
-| `apps/web/` | Next.js frontend |
-| `apps/api/` | FastAPI backend |
-| `.github/workflows/` | CI · staging deploy |
+<p align="center" style="color:#9a8f82;font-size:13px;margin:0;">
+<em>Not another chatbot on your repo.</em>
+</p>
 
 <br />
 
@@ -225,11 +45,104 @@ CI on every push to `main` / `develop` → [.github/workflows/ci.yml](.github/wo
 
 <div align="center">
 
-<sub>
+<p style="color:#d4954a;font-size:11px;letter-spacing:0.16em;font-weight:700;margin:0 0 16px 0;">HOW IT WORKS</p>
 
-**Backstory** · v0.1.0 MVP · Features 1–10  
-Proprietary — all rights reserved
+<img src=".github/assets/readme-flow.svg" alt="Connect → Ask → Answer Receipt or honest refusal" width="920" />
 
-</sub>
+</div>
+
+<br />
+
+<table width="100%"><tr><td bgcolor="#1e1a15" style="padding:22px 28px;border-radius:12px;border:1px solid #3d3630;">
+
+<p style="color:#f0ebe3;margin:0 0 8px 0;font-size:15px;">
+<strong style="color:#d4954a;">Archaeology Brief</strong> — before an expert leaves, Backstory reads the system’s risk signals and generates questions only they can answer. Record the interview. The next answer gets stronger.
+</p>
+<p style="color:#4a9b72;margin:0;font-family:ui-monospace,monospace;font-size:13px;">
+payroll_calc.py:142 · JIRA-4821 · Interview @ 04:12
+</p>
+
+</td></tr></table>
+
+<br />
+
+---
+
+<div align="center">
+
+<p style="color:#d4954a;font-size:11px;letter-spacing:0.16em;font-weight:700;margin:0 0 16px 0;">UNDER THE HOOD</p>
+
+<img src=".github/assets/readme-stack.svg" alt="Architecture — Next.js, FastAPI, Postgres, Redis, Groq" width="920" />
+
+<br /><br />
+
+<p align="center" style="margin:0;">
+<img src="https://img.shields.io/badge/Next.js-15-1a1410?style=flat-square&logo=nextdotjs&logoColor=d4954a" alt="Next.js" />
+<img src="https://img.shields.io/badge/FastAPI-Python-d4954a?style=flat-square&logo=fastapi&logoColor=1a1410" alt="FastAPI" />
+<img src="https://img.shields.io/badge/Postgres-pgvector-2d6a4f?style=flat-square&logo=postgresql&logoColor=f0ebe3" alt="Postgres" />
+<img src="https://img.shields.io/badge/Redis-Celery-c8853a?style=flat-square&logo=redis&logoColor=1a1410" alt="Redis" />
+<img src="https://img.shields.io/badge/Clerk-Auth-2a2520?style=flat-square&logo=clerk&logoColor=f0ebe3" alt="Clerk" />
+<img src="https://img.shields.io/badge/Groq-LLM_+_Whisper-1e1a15?style=flat-square&logo=smartthings&logoColor=d4954a" alt="Groq" />
+</p>
+
+</div>
+
+<br />
+
+---
+
+<table width="100%"><tr><td bgcolor="#12100d" style="padding:28px 32px;border-radius:14px;border-top:3px solid #d4954a;">
+
+<p align="center" style="color:#d4954a;font-size:11px;letter-spacing:0.16em;font-weight:700;margin:0 0 20px 0;">RUN IT LOCALLY</p>
+
+<p style="color:#9a8f82;margin:0 0 16px 0;font-size:14px;">
+Node 20+ · pnpm · Python 3.12 · <a href="https://docs.astral.sh/uv/" style="color:#d4954a;">uv</a> · Docker · <a href="https://clerk.com" style="color:#d4954a;">Clerk</a> with Organizations
+</p>
+
+<pre style="background:#0c0a08;color:#f0ebe3;padding:16px 20px;border-radius:10px;border:1px solid #3d3630;overflow-x:auto;font-size:13px;line-height:1.5;"><code>git clone git@github.com:MQ-06/backstory-ai.git && cd backstory-ai
+cp .env.example apps/api/.env && cp .env.example apps/web/.env.local
+make install && make up && make db-migrate && make dev</code></pre>
+
+<p style="color:#9a8f82;margin:16px 0 8px 0;font-size:13px;">Second terminal · uploads &amp; transcription:</p>
+
+<pre style="background:#0c0a08;color:#d4954a;padding:12px 20px;border-radius:10px;border:1px solid #3d3630;font-size:13px;margin:0;"><code>make dev-worker</code></pre>
+
+<p style="color:#9a8f82;margin:16px 0 8px 0;font-size:13px;">Demo · sign in → <strong style="color:#f0ebe3;">Settings</strong> → copy org id:</p>
+
+<pre style="background:#0c0a08;color:#f0ebe3;padding:12px 20px;border-radius:10px;border:1px solid #3d3630;font-size:13px;margin:0;"><code>export DEMO_CLERK_ORG_ID=org_xxxxxxxx && make demo-seed</code></pre>
+
+<p style="color:#f0ebe3;margin:16px 0 0 0;font-size:14px;">
+App → <code style="color:#4a9b72;background:#0c0a08;padding:2px 6px;border-radius:4px;">localhost:3000</code> &nbsp;·&nbsp; API → <code style="color:#4a9b72;background:#0c0a08;padding:2px 6px;border-radius:4px;">localhost:8000</code><br/>
+Open <strong>Streetlight Payroll Demo</strong> · ask · click a citation.
+</p>
+
+</td></tr></table>
+
+<br />
+
+---
+
+<div align="center">
+
+<p style="color:#d4954a;font-size:11px;letter-spacing:0.16em;font-weight:700;margin:0 0 20px 0;">IN THE APP</p>
+
+<table>
+<tr>
+<td align="center" width="22%" style="padding:16px;"><strong style="color:#f0ebe3;">Ask</strong><br/><span style="color:#9a8f82;font-size:12px;">cited answers</span></td>
+<td align="center" width="22%" style="padding:16px;"><strong style="color:#f0ebe3;">Sources</strong><br/><span style="color:#9a8f82;font-size:12px;">git · issues · docs</span></td>
+<td align="center" width="22%" style="padding:16px;"><strong style="color:#d4954a;">Capture</strong><br/><span style="color:#9a8f82;font-size:12px;">brief · interviews</span></td>
+<td align="center" width="22%" style="padding:16px;"><strong style="color:#f0ebe3;">Library</strong><br/><span style="color:#9a8f82;font-size:12px;">every artifact</span></td>
+</tr>
+</table>
+
+<br />
+
+<a href="https://backstory-ai.vercel.app">
+  <img src="https://img.shields.io/badge/Open_Backstory-→-f0ebe3?style=for-the-badge&labelColor=d4954a" alt="Open Backstory" />
+</a>
+
+<br /><br />
+
+<sub style="color:#9a8f82;">Memory layer for legacy systems</sub>
 
 </div>
