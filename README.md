@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src=".github/assets/readme-banner.svg" alt="Backstory — memory layer for legacy systems" width="920" />
+<img src=".github/assets/readme-banner.png" alt="Backstory — memory layer for legacy systems" width="920" />
 
 <br />
 
@@ -47,7 +47,7 @@ No evidence? <strong style="color:#c9a07a;">“I don’t have this.”</strong> 
 
 <p style="color:#d4954a;font-size:11px;letter-spacing:0.16em;font-weight:700;margin:0 0 16px 0;">HOW IT WORKS</p>
 
-<img src=".github/assets/readme-flow.svg" alt="Connect → Ask → Answer Receipt or honest refusal" width="920" />
+<img src=".github/assets/readme-flow.png" alt="Connect → Ask → Answer Receipt or honest refusal" width="920" />
 
 </div>
 
@@ -72,7 +72,7 @@ payroll_calc.py:142 · JIRA-4821 · Interview @ 04:12
 
 <p style="color:#d4954a;font-size:11px;letter-spacing:0.16em;font-weight:700;margin:0 0 16px 0;">UNDER THE HOOD</p>
 
-<img src=".github/assets/readme-stack.svg" alt="Architecture — Next.js, FastAPI, Postgres, Redis, Groq" width="920" />
+<img src=".github/assets/readme-stack.png" alt="Architecture — Next.js, FastAPI, Postgres, Redis, Groq" width="920" />
 
 <br /><br />
 

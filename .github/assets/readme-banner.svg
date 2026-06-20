@@ -1,9 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="920" height="220" viewBox="0 0 920 220" fill="none">
   <rect width="920" height="220" rx="16" fill="#12100d"/>
   <rect x="1" y="1" width="918" height="218" rx="15" stroke="#d4954a" stroke-opacity="0.35" stroke-width="1"/>
   <rect x="0" y="0" width="920" height="3" rx="16" fill="#d4954a"/>
-  <text x="460" y="78" text-anchor="middle" fill="#f0ebe3" font-family="Georgia, 'Times New Roman', serif" font-size="42" font-weight="600">Backstory</text>
-  <text x="460" y="118" text-anchor="middle" fill="#9a8f82" font-family="system-ui, -apple-system, sans-serif" font-size="15" letter-spacing="0.12em">MEMORY LAYER FOR LEGACY SYSTEMS</text>
-  <text x="460" y="162" text-anchor="middle" fill="#f0ebe3" font-family="Georgia, 'Times New Roman', serif" font-size="20">Code tells you what. <tspan fill="#d4954a">Backstory remembers why.</tspan></text>
-  <text x="460" y="196" text-anchor="middle" fill="#4a9b72" font-family="ui-monospace, monospace" font-size="13">receipts you can click · honest refusal · tenant-scoped</text>
+  <text x="460" y="78" text-anchor="middle" fill="#f0ebe3" font-family="Georgia, serif" font-size="42" font-weight="600">Backstory</text>
+  <text x="460" y="118" text-anchor="middle" fill="#9a8f82" font-family="sans-serif" font-size="15" letter-spacing="2">MEMORY LAYER FOR LEGACY SYSTEMS</text>
+  <text x="460" y="162" text-anchor="middle" fill="#f0ebe3" font-family="Georgia, serif" font-size="20">Code tells you what. <tspan fill="#d4954a">Backstory remembers why.</tspan></text>
+  <text x="460" y="196" text-anchor="middle" fill="#4a9b72" font-family="monospace" font-size="13">receipts you can click &#183; honest refusal &#183; tenant-scoped</text>
 </svg>

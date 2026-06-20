@@ -1,30 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="920" height="200" viewBox="0 0 920 200" fill="none">
   <rect width="920" height="200" rx="12" fill="#12100d"/>
-  <text x="460" y="32" text-anchor="middle" fill="#d4954a" font-family="system-ui, sans-serif" font-size="11" letter-spacing="0.14em" font-weight="700">ARCHITECTURE</text>
-  <!-- Browser -->
+  <text x="460" y="32" text-anchor="middle" fill="#d4954a" font-family="sans-serif" font-size="11" letter-spacing="2" font-weight="700">ARCHITECTURE</text>
   <rect x="40" y="52" width="160" height="72" rx="10" fill="#1e1a15" stroke="#d4954a" stroke-width="1.5"/>
-  <text x="120" y="82" text-anchor="middle" fill="#f0ebe3" font-family="system-ui,sans-serif" font-size="13" font-weight="600">Next.js</text>
-  <text x="120" y="102" text-anchor="middle" fill="#9a8f82" font-family="system-ui,sans-serif" font-size="11">Vercel · Clerk</text>
-  <!-- API -->
+  <text x="120" y="82" text-anchor="middle" fill="#f0ebe3" font-family="sans-serif" font-size="13" font-weight="600">Next.js</text>
+  <text x="120" y="102" text-anchor="middle" fill="#9a8f82" font-family="sans-serif" font-size="11">Vercel + Clerk</text>
   <rect x="280" y="44" width="180" height="88" rx="10" fill="#1e1a15" stroke="#c8853a" stroke-width="1.5"/>
-  <text x="370" y="74" text-anchor="middle" fill="#f0ebe3" font-family="system-ui,sans-serif" font-size="13" font-weight="600">FastAPI</text>
-  <text x="370" y="94" text-anchor="middle" fill="#9a8f82" font-family="system-ui,sans-serif" font-size="11">Render · SSE</text>
+  <text x="370" y="74" text-anchor="middle" fill="#f0ebe3" font-family="sans-serif" font-size="13" font-weight="600">FastAPI</text>
+  <text x="370" y="94" text-anchor="middle" fill="#9a8f82" font-family="sans-serif" font-size="11">Render + SSE</text>
   <rect x="300" y="108" width="140" height="28" rx="6" fill="#2a2520" stroke="#3d3630"/>
-  <text x="370" y="127" text-anchor="middle" fill="#d4954a" font-family="system-ui,sans-serif" font-size="10">Celery worker</text>
-  <!-- Data -->
+  <text x="370" y="127" text-anchor="middle" fill="#d4954a" font-family="sans-serif" font-size="10">Celery worker</text>
   <rect x="540" y="52" width="150" height="72" rx="10" fill="#1e1a15" stroke="#4a9b72" stroke-width="1.5"/>
-  <text x="615" y="82" text-anchor="middle" fill="#f0ebe3" font-family="system-ui,sans-serif" font-size="13" font-weight="600">Postgres</text>
-  <text x="615" y="102" text-anchor="middle" fill="#4a9b72" font-family="system-ui,sans-serif" font-size="11">pgvector · Neon</text>
+  <text x="615" y="82" text-anchor="middle" fill="#f0ebe3" font-family="sans-serif" font-size="13" font-weight="600">Postgres</text>
+  <text x="615" y="102" text-anchor="middle" fill="#4a9b72" font-family="sans-serif" font-size="11">pgvector + Neon</text>
   <rect x="720" y="52" width="150" height="72" rx="10" fill="#1e1a15" stroke="#4a9b72" stroke-width="1.5"/>
-  <text x="795" y="82" text-anchor="middle" fill="#f0ebe3" font-family="system-ui,sans-serif" font-size="13" font-weight="600">Redis</text>
-  <text x="795" y="102" text-anchor="middle" fill="#4a9b72" font-family="system-ui,sans-serif" font-size="11">Upstash · jobs</text>
-  <!-- Groq -->
+  <text x="795" y="82" text-anchor="middle" fill="#f0ebe3" font-family="sans-serif" font-size="13" font-weight="600">Redis</text>
+  <text x="795" y="102" text-anchor="middle" fill="#4a9b72" font-family="sans-serif" font-size="11">Upstash + jobs</text>
   <rect x="280" y="148" width="180" height="36" rx="8" fill="#2a2520" stroke="#3d3630"/>
-  <text x="370" y="171" text-anchor="middle" fill="#9a8f82" font-family="system-ui,sans-serif" font-size="11">Groq · LLM + Whisper</text>
-  <!-- Arrows -->
+  <text x="370" y="171" text-anchor="middle" fill="#9a8f82" font-family="sans-serif" font-size="11">Groq LLM + Whisper</text>
   <path d="M200 88 H280" stroke="#d4954a" stroke-width="1.5" marker-end="url(#a)"/>
   <path d="M460 76 H540" stroke="#4a9b72" stroke-width="1.5" marker-end="url(#a)"/>
   <path d="M460 100 H540" stroke="#4a9b72" stroke-width="1.5" marker-end="url(#a)"/>
   <path d="M690 88 H720" stroke="#4a9b72" stroke-width="1.5" marker-end="url(#a)"/>
-  <defs><marker id="a" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#c8853a"/></marker></defs>
+  <defs>
+    <marker id="a" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#c8853a"/>
+    </marker>
+  </defs>
 </svg>
