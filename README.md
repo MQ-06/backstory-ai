@@ -157,77 +157,6 @@ His answer is recorded on video, every sentence timestamped. Two years from now,
 
 <br />
 
-<table width="100%">
-<tr><th align="left" width="18%">Layer</th><th align="left">Choice</th><th align="left">Why</th></tr>
-<tr>
-<td valign="top">
-
-🟧 **Frontend**
-
-</td>
-<td valign="top">
-
-Next.js 15 · TypeScript<br/>Tailwind + shadcn/ui<br/>TanStack Query · SSE
-
-</td>
-<td valign="top">Streamed answers need a UI that can render tokens as they arrive without janking the citation chips around them.</td>
-</tr>
-<tr>
-<td valign="top">
-
-🟫 **API / Backend**
-
-</td>
-<td valign="top">
-
-Python · FastAPI<br/>Celery + Redis workers<br/>SSE endpoints
-
-</td>
-<td valign="top">Ingestion is async and bursty (a full repo import vs. a single question), so the queue and the request path are deliberately separate.</td>
-</tr>
-<tr>
-<td valign="top">
-
-🟩 **Data**
-
-</td>
-<td valign="top">
-
-Postgres + pgvector<br/>Cloudflare R2 (blobs)<br/>Redis (queue / cache)
-
-</td>
-<td valign="top">One database for relational, vector, and full-text — the knowledge graph (<code>link</code> table) and the embeddings live next to each other, not in separate systems that drift apart.</td>
-</tr>
-<tr>
-<td valign="top">
-
-⬛ **AI / ML**
-
-</td>
-<td valign="top">
-
-Frontier LLM API<br/>Whisper transcription<br/>Embedding API · Langfuse evals
-
-</td>
-<td valign="top">The model sits behind a provider abstraction on purpose — it's a commodity input, not the moat. Langfuse is what makes the refusal rate a number you can gate CI on, not a vibe.</td>
-</tr>
-<tr>
-<td valign="top">
-
-🟨 **Auth / Infra**
-
-</td>
-<td valign="top">
-
-Clerk (auth + orgs + RBAC)<br/>Vercel + Fly.io + Neon<br/>GitHub Actions · Sentry
-
-</td>
-<td valign="top">Multi-tenant from day one — every org/engagement boundary is enforced at the auth layer, not bolted on later when a customer asks about data isolation.</td>
-</tr>
-</table>
-
-<br />
-
 ---
 
 ## 🧭 Architecture
@@ -272,36 +201,6 @@ flowchart TD
 ```
 
 There's a gate **before** generation — do we even have enough evidence to attempt this — and a gate **after** — does every sentence the model wrote actually trace back to a real citation. Both have to pass, every time, with no override.
-
-<details>
-<summary><strong>Data model — the entities that hold the knowledge graph together</strong></summary>
-<br />
-
-| Entity | What it stores | Key relationship |
-|---|---|---|
-| `org` / `engagement` | Tenancy boundary — every row scoped here | Root of all data isolation |
-| `source` | Connected repo, ticket project, or doc set + sync status | Belongs to engagement |
-| `code_entity` | A file or function at a specific revision and line range | Linked to artifacts via `link` |
-| `artifact` | A ticket, a doc chunk, or an interview statement | Linked to `code_entity` |
-| `chunk` | A retrievable unit — embedding vector + full-text index | Belongs to an artifact |
-| `link` | The knowledge-graph edge: artifact ↔ code, with a confidence score | Powers cross-horizon answers |
-| `transcript_segment` | A time-coded interview segment — the anchor for a video clip | Stored as artifact, linked to code |
-| `answer` / `citation` | The persisted answer and its resolved Receipts | Audit trail, shareable |
-
-</details>
-
-<details>
-<summary><strong>Design principles, if you're picking apart the UI</strong></summary>
-<br />
-
-- **Evidence-first** — citations sit beside the prose, not below it. The UI is built to make verifying faster than doubting.
-- **Trust-signalling** — refusal is a confident, first-class screen, not an error state. Confidence, source count, and freshness stay visible at all times.
-- **Flat and calm** — minimal chrome, real whitespace. The legacy-systems buyer wants a serious instrument, not a toy.
-- **Code-aware everywhere** — code lines, tickets, and clips render as clickable primitives wherever they show up, not just on one dedicated page.
-- **Respectful capture** — interview surfaces stay warm and low-pressure. Consent and recording state are unmissable. The departing expert should never feel surveilled.
-- **Progress is the product** — ingestion status and coverage are always legible, because buyers pay for that number.
-
-</details>
 
 <br />
 
@@ -370,20 +269,6 @@ The MVP covers Features 1–10: ingestion, code linking, plain-language Q&A, hon
 
 ---
 
-## 🎯 What "working" looks like
-
-The North Star is simple to state and hard to fake: **verified cited answers that save real time** — answers that shipped with valid Answer Receipts and that someone actually acted on. Not queries. Not sessions. Answers people trusted enough to use.
-
-A few signals underneath that:
-
-- **Time to first cited answer** — should happen in the first session, not the first week.
-- **Escalations to the departing expert** — should trend down as the team starts asking Backstory first.
-- **Unprompted usage in week 3** — the honest tell that this became a habit instead of a novelty.
-
-<br />
-
----
-
 ## 🛡 The non-negotiables
 
 Two rules in this product don't have a config flag:
@@ -402,8 +287,6 @@ One hallucination is enough to undo every correct answer that came before it. So
 This project is **proprietary and confidential**. All rights reserved.
 
 The source code, product design, and documentation in this repository are not licensed for reuse, redistribution, or modification outside of authorized contributors. If you're evaluating Backstory for a pilot, an investment, or a partnership and need access terms in writing, reach out directly rather than assuming an open-source license applies.
-
-> Swap this section for MIT/Apache-2.0/etc. if and when the project's licensing posture changes — this README assumes closed-source by default since none was specified.
 
 <br />
 
