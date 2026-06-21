@@ -284,7 +284,7 @@ One hallucination is enough to undo every correct answer that came before it. So
 
 ## 📜 License
 
-Swap this section for MIT/Apache-2.0/etc. if and when the project's licensing posture changes — this README assumes closed-source by default since none was specified.
+[MIT License](LICENSE) — Copyright (c) 2026 MQ-06
 
 <br />
 
