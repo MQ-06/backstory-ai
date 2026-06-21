@@ -14,7 +14,7 @@
 
 <br /><br />
 
-[**Try it**](https://backstory-ai.vercel.app) · [How it works](#how-it-works) · [The three horizons](#the-three-horizons) · [Architecture](#under-the-hood) · [Roadmap](#where-this-is-going) · [Run locally](#run-it-locally)
+[**Try it**](https://backstory-ai.vercel.app) · [The problem](#the-problem-nobody-documents) · [How it works](#how-it-works) · [Three horizons](#the-three-horizons) · [Tech stack](#tech-stack) · [Architecture](#architecture) · [After the MVP](#after-the-mvp) · [Run locally](#run-it-locally) · [License](#license)
 
 </div>
 
@@ -149,41 +149,129 @@ His answer is recorded on video, every sentence timestamped. Two years from now,
 
 ---
 
-## 🧱 Under the hood
+## 🎨 Tech stack
 
 <div align="center">
 <img src=".github/assets/readme-stack.svg" alt="Architecture diagram — Next.js, FastAPI, Postgres with pgvector, Redis, Groq" width="920" />
-
-<br /><br />
-
-<img src="https://img.shields.io/badge/Next.js-15-1a1410?style=flat-square&logo=nextdotjs&logoColor=d4954a" alt="Next.js" />
-<img src="https://img.shields.io/badge/FastAPI-Python-d4954a?style=flat-square&logo=fastapi&logoColor=1a1410" alt="FastAPI" />
-<img src="https://img.shields.io/badge/Postgres-pgvector-2d6a4f?style=flat-square&logo=postgresql&logoColor=f0ebe3" alt="Postgres" />
-<img src="https://img.shields.io/badge/Redis-Celery-c8853a?style=flat-square&logo=redis&logoColor=1a1410" alt="Redis" />
-<img src="https://img.shields.io/badge/Clerk-Auth-2a2520?style=flat-square&logo=clerk&logoColor=f0ebe3" alt="Clerk" />
-<img src="https://img.shields.io/badge/Groq-LLM_+_Whisper-1e1a15?style=flat-square&logo=smartthings&logoColor=d4954a" alt="Groq" />
-
 </div>
 
 <br />
 
-The part that actually matters isn't any single piece of this stack — it's the **double grounding gate** that sits between retrieval and generation:
+<table width="100%">
+<tr><th align="left" width="18%">Layer</th><th align="left">Choice</th><th align="left">Why</th></tr>
+<tr>
+<td valign="top">
 
-```
-Raw Sources → OCR/Extract → Chunk → Embed + Index
-     ↓
-Code Linking (deterministic pass, then semantic pass)
-     ↓
-Hybrid Retrieval (vector + keyword, reciprocal rank fusion, graph-neighbor expansion)
-     ↓
-Evidence Gate  ──►  not enough evidence?  ──►  Honest refusal, no generation call made
-     ↓
-Generate + Verify  ──►  every claim checked against its citation before it ships
-     ↓
-Answer + Receipts
+🟧 **Frontend**
+
+</td>
+<td valign="top">
+
+Next.js 15 · TypeScript<br/>Tailwind + shadcn/ui<br/>TanStack Query · SSE
+
+</td>
+<td valign="top">Streamed answers need a UI that can render tokens as they arrive without janking the citation chips around them.</td>
+</tr>
+<tr>
+<td valign="top">
+
+🟫 **API / Backend**
+
+</td>
+<td valign="top">
+
+Python · FastAPI<br/>Celery + Redis workers<br/>SSE endpoints
+
+</td>
+<td valign="top">Ingestion is async and bursty (a full repo import vs. a single question), so the queue and the request path are deliberately separate.</td>
+</tr>
+<tr>
+<td valign="top">
+
+🟩 **Data**
+
+</td>
+<td valign="top">
+
+Postgres + pgvector<br/>Cloudflare R2 (blobs)<br/>Redis (queue / cache)
+
+</td>
+<td valign="top">One database for relational, vector, and full-text — the knowledge graph (<code>link</code> table) and the embeddings live next to each other, not in separate systems that drift apart.</td>
+</tr>
+<tr>
+<td valign="top">
+
+⬛ **AI / ML**
+
+</td>
+<td valign="top">
+
+Frontier LLM API<br/>Whisper transcription<br/>Embedding API · Langfuse evals
+
+</td>
+<td valign="top">The model sits behind a provider abstraction on purpose — it's a commodity input, not the moat. Langfuse is what makes the refusal rate a number you can gate CI on, not a vibe.</td>
+</tr>
+<tr>
+<td valign="top">
+
+🟨 **Auth / Infra**
+
+</td>
+<td valign="top">
+
+Clerk (auth + orgs + RBAC)<br/>Vercel + Fly.io + Neon<br/>GitHub Actions · Sentry
+
+</td>
+<td valign="top">Multi-tenant from day one — every org/engagement boundary is enforced at the auth layer, not bolted on later when a customer asks about data isolation.</td>
+</tr>
+</table>
+
+<br />
+
+---
+
+## 🧭 Architecture
+
+The part that actually matters isn't any single piece of the stack above — it's the **double grounding gate** that sits between retrieval and generation. The model is never allowed to answer from evidence that isn't there.
+
+```mermaid
+%%{init: {'theme':'base', 'themeVariables': {
+  'primaryColor': '#1e1a15',
+  'primaryTextColor': '#f0ebe3',
+  'primaryBorderColor': '#d4954a',
+  'lineColor': '#c8853a',
+  'secondaryColor': '#2d6a4f',
+  'tertiaryColor': '#1a1410',
+  'background': '#12100d',
+  'mainBkg': '#1e1a15',
+  'nodeTextColor': '#f0ebe3',
+  'fontFamily': 'ui-monospace, monospace'
+}}}%%
+flowchart TD
+    A["📁 Raw Sources<br/>git · tickets · docs"] --> B["🔍 OCR + Extract Text"]
+    B --> C["✂️ Chunk by Semantic Unit"]
+    C --> D["🧬 Embed + Index<br/>pgvector HNSW · BM25"]
+    D --> E["🔗 Code Linking<br/>deterministic pass → semantic pass"]
+    E --> F["🎯 Hybrid Retrieval<br/>vector + keyword · RRF · graph-neighbor expansion"]
+    F --> G{"🚧 Evidence Gate<br/>enough proof to answer?"}
+    G -- "no" --> H["🛑 Honest Refusal<br/>“I don't have this”<br/>no generation call made"]
+    G -- "yes" --> I["✍️ Generate + Verify<br/>every sentence checked against its citation"]
+    I --> J["✅ Answer + Receipts<br/>code line · ticket · video clip"]
+
+    classDef source fill:#1a1410,stroke:#9a8f82,color:#f0ebe3
+    classDef process fill:#1e1a15,stroke:#d4954a,color:#f0ebe3
+    classDef gate fill:#2d6a4f,stroke:#4a9b72,color:#f0ebe3
+    classDef refuse fill:#3d2a1f,stroke:#c9a07a,color:#f0ebe3
+    classDef done fill:#2d6a4f,stroke:#4a9b72,color:#f0ebe3
+
+    class A source
+    class B,C,D,E,F process
+    class G gate
+    class H refuse
+    class J done
 ```
 
-The model never gets to answer from something that isn't there. There's a gate before generation (do we even have enough evidence to attempt this) and a gate after (does every sentence the model wrote actually trace back to a real citation). Both have to pass.
+There's a gate **before** generation — do we even have enough evidence to attempt this — and a gate **after** — does every sentence the model wrote actually trace back to a real citation. Both have to pass, every time, with no override.
 
 <details>
 <summary><strong>Data model — the entities that hold the knowledge graph together</strong></summary>
@@ -258,7 +346,7 @@ Open the **Streetlight Payroll Demo**, ask it something, click a citation. That'
 <tr>
 <td align="center" width="25%"><strong>Ask</strong><br/><sub>cited answers, streamed</sub></td>
 <td align="center" width="25%"><strong>Sources</strong><br/><sub>git · tickets · docs</sub></td>
-<td align="center" width="25%"><strong>Capture</strong><br/><sub>brief · studio · clips</sub></td>
+<td align="center" width="25%"><strong>Interviews</strong><br/><sub>brief · studio · clips</sub></td>
 <td align="center" width="25%"><strong>Library</strong><br/><sub>every artifact, browsable</sub></td>
 </tr>
 </table>
@@ -267,34 +355,9 @@ Open the **Streetlight Payroll Demo**, ask it something, click a citation. That'
 
 ---
 
-## 🗺 Where this is going
+## 🗺 After the MVP
 
-The MVP is Features 1–10: ingestion, code linking, plain-language Q&A, honest refusal, cross-horizon search, Answer Receipts, video interviews, and the Archaeology Brief. Five sprints, roughly 5–8 weeks.
-
-```
-Sprint 0          Sprint 1              Sprint 2                 Sprint 3              Sprint 4
-────────          ────────              ────────                 ────────              ────────
-Login +           Git + tickets +       Ask questions +          Interview +           Polish +
-empty app    →    docs flow in     →    cited answers       →    video clips      →    ship demo
-```
-
-<details>
-<summary><strong>Sprint-by-sprint detail</strong></summary>
-<br />
-
-| Sprint | Goal | Done when |
-|---|---|---|
-| **0 — Foundation** | A real app you can sign into and deploy. Nothing smart yet. | Sign in → create an engagement → empty Sources page → CI green |
-| **1 — Ingestion** | Connect real sources, watch them get indexed. | Repo + tickets + a PDF all show **Indexed**; re-sync deduplicates correctly |
-| **2 — Linking & Receipts** | The main value moment: ask, get proof or an honest no. | Cross-horizon cited answer or correct refusal — every claim sourced |
-| **3 — Archaeology Brief & Interviews** | Record departing engineers; their words become proof. | Generate brief → record interview → answer cites the clip at the exact second |
-| **4 — Eval gate & polish** | Harden, test, ship the replicable demo. | Full demo runs end-to-end; CI eval gate passes; tenant isolation holds |
-
-</details>
-
-<details>
-<summary><strong>After the MVP</strong></summary>
-<br />
+The MVP covers Features 1–10: ingestion, code linking, plain-language Q&A, honest refusal, cross-horizon search, Answer Receipts, video interviews, and the Archaeology Brief — the demo no competitor can replicate. What ships after that is where the product compounds.
 
 | Wave | What ships | The idea |
 |---|---|---|
@@ -302,8 +365,6 @@ empty app    →    docs flow in     →    cited answers       →    video cli
 | **First pilot** | Completeness scoring, module handover briefs | Turns a pilot into something with a measurable deliverable |
 | **First enterprise deal** | Knowledge Insurance Report, risk heatmap, self-hosted/air-gapped | What a CTO actually signs a check for |
 | **V3** | Code Funeral Notices, the rest | Preserve the knowledge context even after the code itself is deleted |
-
-</details>
 
 <br />
 
@@ -331,6 +392,18 @@ Two rules in this product don't have a config flag:
 2. **"I don't have this" is always on the table, and it's never styled like a failure.** A gap in the memory is a prompt to fill the gap — not something to paper over with a confident guess.
 
 One hallucination is enough to undo every correct answer that came before it. So refusal isn't the fallback path here. It's the foundation everything else stands on.
+
+<br />
+
+---
+
+## 📜 License
+
+This project is **proprietary and confidential**. All rights reserved.
+
+The source code, product design, and documentation in this repository are not licensed for reuse, redistribution, or modification outside of authorized contributors. If you're evaluating Backstory for a pilot, an investment, or a partnership and need access terms in writing, reach out directly rather than assuming an open-source license applies.
+
+> Swap this section for MIT/Apache-2.0/etc. if and when the project's licensing posture changes — this README assumes closed-source by default since none was specified.
 
 <br />
 
