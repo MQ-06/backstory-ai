@@ -284,9 +284,7 @@ One hallucination is enough to undo every correct answer that came before it. So
 
 ## 📜 License
 
-This project is **proprietary and confidential**. All rights reserved.
-
-The source code, product design, and documentation in this repository are not licensed for reuse, redistribution, or modification outside of authorized contributors. If you're evaluating Backstory for a pilot, an investment, or a partnership and need access terms in writing, reach out directly rather than assuming an open-source license applies.
+Swap this section for MIT/Apache-2.0/etc. if and when the project's licensing posture changes — this README assumes closed-source by default since none was specified.
 
 <br />
 
