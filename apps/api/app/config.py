@@ -1,7 +1,36 @@
 from functools import lru_cache
+from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# libpq/psycopg query params that asyncpg rejects when passed through the URL
+_ASYNCPG_INCOMPATIBLE_QUERY_PARAMS = frozenset({"sslmode", "channel_binding"})
+
+
+def asyncpg_database_url(url: str) -> tuple[str, dict[str, object]]:
+    """Strip libpq-only query params and map sslmode to asyncpg connect_args."""
+    parsed = urlparse(url)
+    if not parsed.query:
+        return url, {}
+
+    params = parse_qs(parsed.query)
+    connect_args: dict[str, object] = {}
+
+    sslmode_values = params.pop("sslmode", [])
+    if sslmode_values:
+        sslmode = sslmode_values[0]
+        if sslmode in ("require", "verify-ca", "verify-full"):
+            connect_args["ssl"] = True
+        elif sslmode == "disable":
+            connect_args["ssl"] = False
+
+    for key in _ASYNCPG_INCOMPATIBLE_QUERY_PARAMS:
+        params.pop(key, None)
+
+    flat = [(key, value) for key, values in params.items() for value in values]
+    clean_url = urlunparse(parsed._replace(query=urlencode(flat)))
+    return clean_url, connect_args
 
 
 def normalize_database_url(url: str) -> str:
@@ -71,6 +100,18 @@ class Settings(BaseSettings):
         if isinstance(value, str):
             return normalize_database_url(value)
         return value
+
+    @property
+    def database_url_async(self) -> str:
+        """Async driver URL with libpq query params removed (asyncpg-safe)."""
+        url, _ = asyncpg_database_url(self.database_url)
+        return url
+
+    @property
+    def database_connect_args(self) -> dict[str, object]:
+        """asyncpg connect_args derived from libpq sslmode in DATABASE_URL."""
+        _, connect_args = asyncpg_database_url(self.database_url)
+        return connect_args
 
     @property
     def database_url_sync(self) -> str:
