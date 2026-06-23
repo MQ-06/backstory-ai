@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
-const apiProxyTarget = process.env.API_PROXY_TARGET?.replace(/\/$/, "");
+const apiProxyTarget = (
+  process.env.API_PROXY_TARGET ??
+  (process.env.VERCEL === "1" ? "https://backstory-ai.onrender.com" : undefined)
+)?.replace(/\/$/, "");
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
