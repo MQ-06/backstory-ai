@@ -89,6 +89,7 @@ class Settings(BaseSettings):
     langfuse_host: str = "https://cloud.langfuse.com"
     sentry_dsn: str = ""
     e2e_test_mode: bool = False
+    ingest_mode: str = "sync"  # sync (no Redis/worker) | celery (local worker + Redis)
     r2_account_id: str = ""
     r2_access_key_id: str = ""
     r2_secret_access_key: str = ""

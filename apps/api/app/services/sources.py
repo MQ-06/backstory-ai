@@ -176,21 +176,36 @@ async def create_source(
     return source
 
 
-def enqueue_source_ingest(source_id: uuid.UUID) -> None:
+def schedule_source_ingest(
+    source_id: uuid.UUID,
+    background_tasks: object | None = None,
+) -> None:
+    """Run ingest in-process (sync) or via Celery (celery)."""
     from app.config import get_settings
     from app.tasks.ingest import run_source_ingest
 
     if get_settings().e2e_test_mode:
         return
 
+    if get_settings().ingest_mode == "sync":
+        if background_tasks is not None:
+            background_tasks.add_task(run_source_ingest.run, str(source_id))
+        else:
+            run_source_ingest.run(str(source_id))
+        return
+
     try:
         run_source_ingest.delay(str(source_id))
     except Exception as exc:
-        # Keep source queued if broker is down — worker can pick up after resync.
         raise RuntimeError(
             "Source saved but ingest queue is unavailable. "
-            "Start Redis (make up) and the worker (make dev-worker), then re-sync."
+            "Set INGEST_MODE=sync on Render, or start Redis and make dev-worker."
         ) from exc
+
+
+def enqueue_source_ingest(source_id: uuid.UUID) -> None:
+    """Deprecated alias — prefer schedule_source_ingest with BackgroundTasks."""
+    schedule_source_ingest(source_id)
 
 
 async def create_doc_source_from_bytes(

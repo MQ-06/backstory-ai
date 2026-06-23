@@ -6,7 +6,7 @@ import asyncio
 import uuid
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -220,6 +220,7 @@ async def upload_interview_media(
 async def post_transcribe(
     engagement_id: uuid.UUID,
     interview_id: uuid.UUID,
+    background_tasks: BackgroundTasks,
     auth: AuthContext = Depends(require_org),
     db: AsyncSession = Depends(get_db),
 ) -> InterviewOut:
@@ -247,7 +248,10 @@ async def post_transcribe(
         raise HTTPException(status_code=404, detail="Interview not found")
 
     try:
-        run_interview_transcribe.delay(str(iid))
+        if get_settings().ingest_mode == "sync":
+            background_tasks.add_task(run_interview_transcribe.run, str(iid))
+        else:
+            run_interview_transcribe.delay(str(iid))
     except Exception as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 

@@ -59,6 +59,16 @@ def test_normalize_database_url_fixes_ostgresql_typo():
     )
 
 
+def test_settings_default_ingest_mode_sync(monkeypatch):
+    monkeypatch.delenv("INGEST_MODE", raising=False)
+    from app.config import get_settings
+
+    get_settings.cache_clear()
+    settings = get_settings()
+    assert settings.ingest_mode == "sync"
+    get_settings.cache_clear()
+
+
 def test_settings_normalizes_env_style_url(monkeypatch):
     monkeypatch.setenv("DATABASE_URL", "postgresql://user:pass@host/db")
     from app.config import get_settings

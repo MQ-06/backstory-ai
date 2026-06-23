@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,7 +13,7 @@ from app.services.sources import (
     SourceOut,
     create_doc_source_from_bytes,
     create_source,
-    enqueue_source_ingest,
+    schedule_source_ingest,
     get_engagement_for_org,
     list_sources,
 )
@@ -41,6 +41,7 @@ async def get_sources(
 async def post_source(
     engagement_id: uuid.UUID,
     payload: SourceCreate,
+    background_tasks: BackgroundTasks,
     auth: AuthContext = Depends(require_org),
     db: AsyncSession = Depends(get_db),
 ) -> SourceOut:
@@ -48,7 +49,7 @@ async def post_source(
     engagement = await get_engagement_for_org(db, engagement_id, auth.org.id)
     source = await create_source(db, auth, engagement, payload)
     try:
-        enqueue_source_ingest(source.id)
+        schedule_source_ingest(source.id, background_tasks)
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     return SourceOut.model_validate(source)
@@ -61,6 +62,7 @@ async def post_source(
 )
 async def upload_doc_source(
     engagement_id: uuid.UUID,
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     auth: AuthContext = Depends(require_org),
     db: AsyncSession = Depends(get_db),
@@ -78,7 +80,7 @@ async def upload_doc_source(
 
     source = await create_doc_source_from_bytes(db, auth, engagement, file.filename, data)
     try:
-        enqueue_source_ingest(source.id)
+        schedule_source_ingest(source.id, background_tasks)
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     return SourceOut.model_validate(source)
@@ -88,6 +90,7 @@ async def upload_doc_source(
 async def resync_source(
     engagement_id: uuid.UUID,
     source_id: uuid.UUID,
+    background_tasks: BackgroundTasks,
     auth: AuthContext = Depends(require_org),
     db: AsyncSession = Depends(get_db),
 ) -> SourceOut:
@@ -106,7 +109,7 @@ async def resync_source(
     await db.commit()
     await db.refresh(source)
     try:
-        enqueue_source_ingest(source.id)
+        schedule_source_ingest(source.id, background_tasks)
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     return SourceOut.model_validate(source)
