@@ -16,12 +16,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { streamAsk, type AskCitation, type AskDoneEvent } from "@/lib/api";
 import { cn, formatErrorMessage } from "@/lib/utils";
 
-const STARTER_QUESTIONS = [
-  "Why does the payroll job fail on months with 31 days?",
-  "Who last changed the month-end batch retry logic?",
-  "What tickets mention the banking API workaround?",
-];
-
 function citationKey(citation: AskCitation, index: number) {
   return citation.id ?? `${citation.label}-${citation.passage_id ?? index}`;
 }
@@ -158,7 +152,7 @@ export function AskPageClient() {
                   "focus-visible:ring-0 focus-visible:ring-offset-0",
                   "placeholder:text-muted-foreground/50",
                 )}
-                placeholder="Why does the payroll job fail on months with 31 days?"
+                placeholder="Ask about your codebase, tickets, docs, or interviews…"
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
                 disabled={isAsking || !engagementId}
@@ -193,28 +187,6 @@ export function AskPageClient() {
                   </Button>
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Starter questions */}
-          <div>
-            <p className="section-label mb-2.5 text-muted-foreground">Try asking</p>
-            <div className="flex flex-wrap gap-2">
-              {STARTER_QUESTIONS.map((q) => (
-                <button
-                  key={q}
-                  type="button"
-                  onClick={() => setQuestion(q)}
-                  disabled={isAsking}
-                  className={cn(
-                    "max-w-full rounded-full border border-border/80 bg-receipt px-4 py-2 text-left text-sm transition-all",
-                    "hover:border-amber/35 hover:bg-amber/5 hover:shadow-soft",
-                    question === q && "border-amber/45 bg-amber/8 ring-1 ring-amber/20",
-                  )}
-                >
-                  {q}
-                </button>
-              ))}
             </div>
           </div>
 
