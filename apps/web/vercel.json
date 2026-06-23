@@ -5,6 +5,6 @@
   "outputDirectory": ".next",
   "regions": ["iad1"],
   "env": {
-    "API_PROXY_TARGET": "https://backstory-ai.onrender.com"
+    "NEXT_PUBLIC_API_URL": "https://backstory-ai.onrender.com"
   }
 }
