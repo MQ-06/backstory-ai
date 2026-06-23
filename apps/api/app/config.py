@@ -7,6 +7,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 def normalize_database_url(url: str) -> str:
     """Ensure async SQLAlchemy engine uses asyncpg (Neon/Render often paste postgresql://)."""
     normalized = url.strip()
+    # Common copy/paste typo on Render — produces sqlalchemy.dialects:ostgresql.asyncpg
+    if normalized.startswith("ostgresql"):
+        normalized = "p" + normalized
+    scheme = normalized.split("://", 1)[0]
+    if "+asyncpg" in scheme or "+psycopg" in scheme:
+        return normalized
     if normalized.startswith("postgres://"):
         normalized = "postgresql://" + normalized[len("postgres://") :]
     if normalized.startswith("postgresql://"):
@@ -23,7 +29,7 @@ class Settings(BaseSettings):
     api_host: str = "0.0.0.0"
     api_port: int = 8000
     redis_url: str = "redis://localhost:6380/0"
-    cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
+    cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000,https://backstory-ai.vercel.app"
     upload_dir: str = "data/uploads"
     github_token: str = ""
     max_upload_bytes: int = 10_485_760  # 10 MB

@@ -119,7 +119,7 @@ export function AtlasSidebar({ activePath }: { activePath: string }) {
 
       <div className="border-b border-white/8 px-4 py-4">
         <p className="section-label mb-2 text-sidebar-foreground/40">Engagement</p>
-        <EngagementSwitcher variant="sidebar" />
+        <EngagementSwitcher variant="sidebar" hideLabel />
       </div>
 
       <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-3 py-4" aria-label="Main">

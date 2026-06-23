@@ -16,16 +16,18 @@ export function AuthPanel({
 }) {
   return (
     <div className="marketing relative flex min-h-screen flex-col bg-background text-foreground">
-      <header className="relative z-10 flex items-center justify-between px-6 py-5">
+      <header className="relative z-10 flex items-center justify-between gap-4 px-6 py-5">
         <Link href="/" className="group flex items-center gap-3">
           <span className="brand-mark size-10 rounded-lg text-xl">B</span>
-          <span className="font-display text-xl">Backstory</span>
+          <span className="font-display text-xl text-foreground">Backstory</span>
         </Link>
-        <Link href="/" className={buttonVariants({ variant: "ghost", size: "sm" })}>
-          <ArrowLeft className="size-3.5" />
-          Back to home
-        </Link>
-        <ThemeToggle />
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <Link href="/" className={buttonVariants({ variant: "ghost", size: "sm" })}>
+            <ArrowLeft className="size-3.5" />
+            Back to home
+          </Link>
+        </div>
       </header>
 
       <div className="relative z-10 flex flex-1 items-center justify-center px-6 pb-12">

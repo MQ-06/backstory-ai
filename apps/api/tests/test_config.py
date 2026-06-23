@@ -20,6 +20,14 @@ def test_normalize_database_url_keeps_asyncpg():
     assert normalize_database_url(url) == url
 
 
+def test_normalize_database_url_fixes_ostgresql_typo():
+    url = "ostgresql+asyncpg://user:pass@host/db"
+    assert (
+        normalize_database_url(url)
+        == "postgresql+asyncpg://user:pass@host/db"
+    )
+
+
 def test_settings_normalizes_env_style_url(monkeypatch):
     monkeypatch.setenv("DATABASE_URL", "postgresql://user:pass@host/db")
     from app.config import get_settings

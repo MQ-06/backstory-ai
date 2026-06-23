@@ -19,6 +19,9 @@ const EngagementContext = createContext<{
   setActiveEngagementId: (id: string) => void;
   engagements: Engagement[];
   isLoading: boolean;
+  isError: boolean;
+  loadError: string | null;
+  retryLoad: () => void;
   createNew: (name: string) => Promise<void>;
 } | null>(null);
 
@@ -31,13 +34,15 @@ function EngagementProviderInner({ children }: { children: ReactNode }) {
     setActiveId(localStorage.getItem(ENGAGEMENT_STORAGE_KEY));
   }, []);
 
-  const { data: engagements = [], isLoading } = useQuery({
+  const { data: engagements = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ["engagements"],
     queryFn: async () => {
       const token = await getToken();
       if (!token) return [];
       return fetchEngagements(token);
     },
+    retry: 1,
+    staleTime: 30_000,
   });
 
   useEffect(() => {
@@ -73,6 +78,11 @@ function EngagementProviderInner({ children }: { children: ReactNode }) {
         },
         engagements,
         isLoading,
+        isError,
+        loadError: isError && error instanceof Error ? error.message : isError ? "Could not load engagements" : null,
+        retryLoad: () => {
+          void refetch();
+        },
         createNew: async (name) => {
           await createMutation.mutateAsync(name);
         },

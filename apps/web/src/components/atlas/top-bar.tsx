@@ -8,10 +8,12 @@ import {
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 
 import { useEngagement } from "@/components/providers";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { cn } from "@/lib/utils";
+import { clerkAppearance } from "@/lib/clerk-appearance";
 
 const PAGE_TITLES: Record<string, string> = {
   "/ask": "Ask",
@@ -30,6 +32,12 @@ export function AtlasTopBar() {
   const pathname = usePathname();
   const { activeEngagement } = useEngagement();
   const title = pageTitle(pathname);
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
+
+  const clerkLook = clerkAppearance(mounted ? resolvedTheme === "dark" : true);
 
   return (
     <header className="sticky top-0 z-40 flex h-12 shrink-0 items-center justify-between gap-4 border-b border-border/70 bg-background/90 px-4 backdrop-blur-md sm:px-6">
@@ -56,20 +64,14 @@ export function AtlasTopBar() {
           <OrganizationSwitcher
             hidePersonal
             appearance={{
+              ...clerkLook,
               elements: {
+                ...clerkLook.elements,
                 rootBox: "hidden sm:flex items-center",
-                organizationSwitcherTrigger:
-                  "rounded-lg border border-border bg-receipt px-2.5 py-1.5 text-xs font-medium shadow-soft",
               },
             }}
           />
-          <UserButton
-            appearance={{
-              elements: {
-                avatarBox: "size-8 ring-2 ring-border",
-              },
-            }}
-          />
+          <UserButton appearance={clerkLook} />
         </ClerkLoaded>
       </div>
     </header>

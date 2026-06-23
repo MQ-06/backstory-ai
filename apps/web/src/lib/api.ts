@@ -22,7 +22,20 @@ export type Source = {
   updated_at: string;
 };
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+/** Empty = same-origin (use API_PROXY_TARGET rewrite on Vercel). Local: http://localhost:8000 */
+const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "").replace(/\/$/, "");
+
+function apiUrl(path: string): string {
+  if (!API_URL) return path;
+  return `${API_URL}${path}`;
+}
+
+function apiReachabilityError(detail: string): string {
+  if (!API_URL) {
+    return `Cannot reach API (proxy). Set API_PROXY_TARGET on Vercel to your API host (${detail})`;
+  }
+  return `Cannot reach API at ${API_URL}. Start it with: make dev-api (${detail})`;
+}
 
 async function apiFetch<T>(
   path: string,
@@ -35,7 +48,7 @@ async function apiFetch<T>(
 
   let response: Response;
   try {
-    response = await fetch(`${API_URL}${path}`, {
+    response = await fetch(apiUrl(path), {
       ...options,
       headers: {
         "Content-Type": "application/json",
@@ -45,9 +58,7 @@ async function apiFetch<T>(
     });
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
-    throw new Error(
-      `Cannot reach API at ${API_URL}. Start it with: make dev-api (${detail})`,
-    );
+    throw new Error(apiReachabilityError(detail));
   }
 
   if (!response.ok) {
@@ -118,7 +129,7 @@ export async function uploadDocSource(
   let response: Response;
   try {
     response = await fetch(
-      `${API_URL}/api/v1/engagements/${engagementId}/sources/docs/upload`,
+      apiUrl(`/api/v1/engagements/${engagementId}/sources/docs/upload`),
       {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
@@ -127,9 +138,7 @@ export async function uploadDocSource(
     );
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
-    throw new Error(
-      `Cannot reach API at ${API_URL}. Start it with: make dev-api (${detail})`,
-    );
+    throw new Error(apiReachabilityError(detail));
   }
   if (!response.ok) {
     const body = await response.text();
@@ -152,7 +161,7 @@ export async function resyncSource(
 
 export async function checkApiHealth(): Promise<boolean> {
   try {
-    const res = await fetch(`${API_URL}/health`);
+    const res = await fetch(apiUrl("/api/health"));
     return res.ok;
   } catch {
     return false;
@@ -207,7 +216,7 @@ export async function streamAsk(handlers: StreamAskHandlers): Promise<void> {
 
   let response: Response;
   try {
-    response = await fetch(`${API_URL}/api/v1/engagements/${engagementId}/ask`, {
+    response = await fetch(apiUrl(`/api/v1/engagements/${engagementId}/ask`), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -219,9 +228,7 @@ export async function streamAsk(handlers: StreamAskHandlers): Promise<void> {
     });
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
-    throw new Error(
-      `Cannot reach API at ${API_URL}. Start it with: make dev-api (${detail})`,
-    );
+    throw new Error(apiReachabilityError(detail));
   }
 
   if (!response.ok) {
@@ -401,7 +408,7 @@ export async function uploadInterviewMedia(
   const form = new FormData();
   form.append("file", file);
   const response = await fetch(
-    `${API_URL}/api/v1/engagements/${engagementId}/interviews/${interviewId}/upload`,
+    apiUrl(`/api/v1/engagements/${engagementId}/interviews/${interviewId}/upload`),
     { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: form },
   );
   if (!response.ok) {
@@ -429,7 +436,7 @@ export async function getInterviewMediaBlobUrl(
   interviewId: string,
 ): Promise<string> {
   const response = await fetch(
-    `${API_URL}/api/v1/engagements/${engagementId}/interviews/${interviewId}/media`,
+    apiUrl(`/api/v1/engagements/${engagementId}/interviews/${interviewId}/media`),
     { headers: { Authorization: `Bearer ${token}` } },
   );
   if (!response.ok) throw new Error("Could not load interview media");
