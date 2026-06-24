@@ -3,18 +3,21 @@
 import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
+import { useState } from "react";
 
 import { ClerkOrgIdPanel } from "@/components/clerk-org-id-panel";
 import { useEngagement } from "@/components/providers";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { fetchEngagementStats } from "@/lib/api";
-import { cn } from "@/lib/utils";
+import { cn, formatErrorMessage } from "@/lib/utils";
 
 export function AdminPageClient() {
   const { getToken } = useAuth();
-  const { activeEngagement } = useEngagement();
+  const { activeEngagement, deleteActive } = useEngagement();
   const engagementId = activeEngagement?.id;
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const { data: stats, isLoading } = useQuery({
     queryKey: ["engagement-stats", engagementId],
@@ -68,6 +71,41 @@ export function AdminPageClient() {
           >
             Manage sources →
           </Link>
+          {engagementId ? (
+            <div className="mt-4 space-y-2 border-t border-border/80 pt-4">
+              <p className="text-xs text-muted-foreground">
+                Delete this engagement and all connected sources, interviews, and memory.
+              </p>
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                disabled={deleting}
+                onClick={async () => {
+                  const name = activeEngagement?.name ?? "this engagement";
+                  if (
+                    !window.confirm(
+                      `Delete "${name}"? This removes all sources and indexed memory. This cannot be undone.`,
+                    )
+                  ) {
+                    return;
+                  }
+                  setDeleting(true);
+                  setDeleteError(null);
+                  try {
+                    await deleteActive();
+                  } catch (err) {
+                    setDeleteError(formatErrorMessage(err, "Could not delete engagement"));
+                  } finally {
+                    setDeleting(false);
+                  }
+                }}
+              >
+                {deleting ? "Deleting…" : "Delete engagement"}
+              </Button>
+              {deleteError ? <p className="text-xs text-destructive">{deleteError}</p> : null}
+            </div>
+          ) : null}
         </CardContent>
       </Card>
 

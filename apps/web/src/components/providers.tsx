@@ -10,7 +10,7 @@ import {
 } from "@tanstack/react-query";
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 
-import { createEngagement, fetchEngagements, type Engagement } from "@/lib/api";
+import { createEngagement, deleteEngagement, fetchEngagements, type Engagement } from "@/lib/api";
 
 const ENGAGEMENT_STORAGE_KEY = "backstory:active-engagement-id";
 
@@ -23,6 +23,7 @@ const EngagementContext = createContext<{
   loadError: string | null;
   retryLoad: () => void;
   createNew: (name: string) => Promise<void>;
+  deleteActive: () => Promise<void>;
 } | null>(null);
 
 function EngagementProviderInner({ children }: { children: ReactNode }) {
@@ -66,6 +67,32 @@ function EngagementProviderInner({ children }: { children: ReactNode }) {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (engagementId: string) => {
+      const token = await getToken();
+      if (!token) throw new Error("Not authenticated");
+      await deleteEngagement(token, engagementId);
+      return engagementId;
+    },
+    onSuccess: (deletedId) => {
+      queryClient.setQueryData<Engagement[]>(["engagements"], (old) =>
+        old?.filter((e) => e.id !== deletedId) ?? [],
+      );
+      const remaining = queryClient.getQueryData<Engagement[]>(["engagements"]) ?? [];
+      queryClient.removeQueries({ queryKey: ["sources", deletedId] });
+      queryClient.removeQueries({ queryKey: ["engagement-stats", deletedId] });
+      if (activeId === deletedId) {
+        const nextId = remaining[0]?.id ?? null;
+        setActiveId(nextId);
+        if (nextId) {
+          localStorage.setItem(ENGAGEMENT_STORAGE_KEY, nextId);
+        } else {
+          localStorage.removeItem(ENGAGEMENT_STORAGE_KEY);
+        }
+      }
+    },
+  });
+
   const activeEngagement = engagements.find((e) => e.id === activeId) ?? null;
 
   return (
@@ -85,6 +112,10 @@ function EngagementProviderInner({ children }: { children: ReactNode }) {
         },
         createNew: async (name) => {
           await createMutation.mutateAsync(name);
+        },
+        deleteActive: async () => {
+          if (!activeId) throw new Error("No engagement selected");
+          await deleteMutation.mutateAsync(activeId);
         },
       }}
     >

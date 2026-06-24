@@ -89,6 +89,35 @@ export async function createEngagement(token: string, name: string): Promise<Eng
   });
 }
 
+export async function deleteEngagement(token: string, engagementId: string): Promise<void> {
+  if (!token) {
+    throw new Error("Not signed in — refresh the page and try again.");
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(apiUrl(`/api/v1/engagements/${engagementId}`), {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
+    throw new Error(apiReachabilityError(detail));
+  }
+
+  if (!response.ok) {
+    const body = await response.text();
+    let message = body || `API error ${response.status}`;
+    try {
+      const parsed = JSON.parse(body) as { detail?: string };
+      if (parsed.detail) message = parsed.detail;
+    } catch {
+      // keep raw body
+    }
+    throw new Error(message);
+  }
+}
+
 export async function fetchSources(token: string, engagementId: string): Promise<Source[]> {
   return apiFetch<Source[]>(`/api/v1/engagements/${engagementId}/sources`, token);
 }

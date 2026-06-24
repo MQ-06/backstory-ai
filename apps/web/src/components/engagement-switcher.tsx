@@ -61,7 +61,8 @@ export function EngagementSwitcher({
           variant="outline"
           className={cn(
             "h-8 w-full gap-1.5",
-            isSidebar && "border-white/20 bg-transparent text-white hover:bg-white/10",
+            isSidebar &&
+              "border-sidebar-border bg-transparent text-sidebar-foreground hover:bg-sidebar-accent",
           )}
           onClick={retryLoad}
         >
@@ -93,7 +94,12 @@ export function EngagementSwitcher({
         }}
       >
         {!hideLabel ? (
-          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-white/45">
+          <p
+            className={cn(
+              "text-[10px] font-bold uppercase tracking-[0.14em]",
+              isSidebar ? "text-sidebar-foreground/45" : "text-muted-foreground",
+            )}
+          >
             New engagement
           </p>
         ) : null}
@@ -101,7 +107,7 @@ export function EngagementSwitcher({
           className={cn(
             "h-9 text-sm",
             isSidebar
-              ? "border-white/25 bg-white/12 text-white placeholder:text-white/45"
+              ? "border-sidebar-border bg-sidebar-accent text-sidebar-foreground shadow-none placeholder:text-sidebar-foreground/45"
               : "bg-background",
           )}
           placeholder="Client or system name"
@@ -113,7 +119,13 @@ export function EngagementSwitcher({
           <Button
             type="submit"
             size="sm"
-            className="h-8 flex-1 bg-amber text-ink hover:bg-amber/90"
+            variant="ghost"
+            className={cn(
+              "h-8 flex-1 hover:text-sidebar-primary-foreground",
+              isSidebar
+                ? "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90"
+                : "bg-amber text-amber-foreground hover:bg-amber/90",
+            )}
             disabled={creating || !name.trim()}
           >
             <Check className="size-3.5" />
@@ -123,7 +135,10 @@ export function EngagementSwitcher({
             type="button"
             variant="ghost"
             size="icon"
-            className={cn("size-8 shrink-0", isSidebar && "text-white hover:bg-white/10")}
+            className={cn(
+              "size-8 shrink-0",
+              isSidebar && "text-sidebar-foreground hover:bg-sidebar-accent",
+            )}
             onClick={() => {
               setShowCreate(false);
               setName("");
@@ -149,7 +164,7 @@ export function EngagementSwitcher({
         <p
           className={cn(
             "text-[10px] font-bold uppercase tracking-[0.14em]",
-            isSidebar ? "text-white/45" : "text-muted-foreground",
+            isSidebar ? "text-sidebar-foreground/45" : "text-muted-foreground",
           )}
         >
           Engagement
@@ -168,7 +183,7 @@ export function EngagementSwitcher({
               className={cn(
                 "h-9 w-full min-w-0 text-sm shadow-soft",
                 isSidebar
-                  ? "border-white/25 bg-white/12 text-white ring-1 ring-white/10 hover:bg-white/16"
+                  ? "border-sidebar-border bg-sidebar-accent text-sidebar-foreground shadow-none ring-1 ring-sidebar-border hover:bg-sidebar-accent/80"
                   : "bg-background",
                 !isSidebar && "sm:max-w-xs",
               )}
@@ -186,7 +201,12 @@ export function EngagementSwitcher({
             </SelectContent>
           </Select>
         ) : (
-          <p className={cn("text-sm", isSidebar ? "text-white/70" : "text-muted-foreground")}>
+          <p
+            className={cn(
+              "text-sm",
+              isSidebar ? "text-sidebar-foreground/70" : "text-muted-foreground",
+            )}
+          >
             No engagements yet
           </p>
         )}
@@ -198,7 +218,7 @@ export function EngagementSwitcher({
           className={cn(
             "h-8 w-full justify-start gap-2 px-2 text-xs font-medium",
             isSidebar
-              ? "text-white/80 hover:bg-white/10 hover:text-white"
+              ? "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground"
               : "text-muted-foreground hover:text-foreground",
           )}
           onClick={() => setShowCreate(true)}

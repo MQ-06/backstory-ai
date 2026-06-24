@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends
+import uuid
+
+from fastapi import APIRouter, Depends, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import AuthContext, require_org
@@ -7,6 +9,7 @@ from app.services.engagements import (
     EngagementCreate,
     EngagementOut,
     create_engagement,
+    delete_engagement,
     list_engagements,
 )
 
@@ -31,3 +34,13 @@ async def post_engagement(
 ) -> EngagementOut:
     engagement = await create_engagement(db, auth, payload)
     return EngagementOut.model_validate(engagement)
+
+
+@router.delete("/{engagement_id}", status_code=204)
+async def remove_engagement(
+    engagement_id: uuid.UUID,
+    auth: AuthContext = Depends(require_org),
+    db: AsyncSession = Depends(get_db),
+) -> Response:
+    await delete_engagement(db, auth, engagement_id)
+    return Response(status_code=204)
