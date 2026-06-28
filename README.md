@@ -282,12 +282,13 @@ One hallucination is enough to undo every correct answer that came before it. So
 
 ---
 
-## 📜 License
+© Ownership
 
-[MIT License](LICENSE) — Copyright (c) 2026 MQ-06
+This is a private, closed-source project. © 2026 MQ-06. All rights reserved.
+
+No license is granted to copy, modify, distribute, or use this code or its contents without prior written permission.
 
 <br />
-
 ---
 
 <div align="center">
