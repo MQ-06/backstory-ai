@@ -282,6 +282,7 @@ One hallucination is enough to undo every correct answer that came before it. So
 
 ---
 
+
 © Ownership
 
 This is a private, closed-source project. © 2026 MQ-06. All rights reserved.
@@ -289,19 +290,15 @@ This is a private, closed-source project. © 2026 MQ-06. All rights reserved.
 No license is granted to copy, modify, distribute, or use this code or its contents without prior written permission.
 
 <br />
----
 
 <div align="center">
-
-**Not another chatbot bolted onto your repo.**
+Not another chatbot bolted onto your repo.
 A memory layer for the systems nobody fully understands anymore — including the people who built them.
 
 <br />
-
 <a href="https://backstory-ai.vercel.app">
   <img src="https://img.shields.io/badge/Open_Backstory-→-f0ebe3?style=for-the-badge&labelColor=d4954a" alt="Open Backstory" />
 </a>
-
 <br /><br />
 
 <sub>Code tells you what. Backstory remembers why.</sub>
